@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_GEEP_FILE /home/aleks/GEEP/GEEP/cmake-build-debug/GEEP)
+set(__QT_DEPLOY_TARGET_GEEP_TYPE EXECUTABLE)
