@@ -52,6 +52,16 @@ protected:
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
 
+private:
+    // Helper Functions
+    static int getRandomInt(int min, int max);
+    static TerminalNode* generateRandomTerminal(const std::vector<TerminalNode*>& terminalSet);
+    static std::unique_ptr<FunctionNode> generateRandomFunction(const std::vector<FunctionFactory>& functionSet);
+    static std::unique_ptr<Node> buildRandomTree(const std::vector<FunctionFactory>& functionSet,
+                                                const std::vector<TerminalNode*>& terminalSet,
+                                                size_t currentDepth, size_t maxDepth,
+                                                size_t& nodeCount, size_t maxNodes);
+
 public:
     // Constructor
     Problem(std::string name);
@@ -68,7 +78,8 @@ public:
     StopCriterion getStopCrit() const { return stopCrit; }
     size_t getStopCritMaxEvaluations() const { return stopCritMaxEvaluations; }
     size_t getPopulationSize() const { return populationSize; }
-
+    const std::vector<FunctionFactory>& getFunctionSet() const { return functionSet; }
+    const std::vector<TerminalNode*>& getTerminalSet() const { return terminalSet; }
 
     // Setters
     void setName(const std::string& name) { this->name = name; }
@@ -79,6 +90,9 @@ public:
     void setFunctionSet(std::vector<FunctionFactory> functionSet) { this->functionSet = functionSet; }
     void setTerminalSet(std::vector<TerminalNode*> terminalSet) { this->terminalSet = terminalSet; }
     void setPopulationSize(size_t populationSize) { this->populationSize = populationSize; }
+
+    // Generate random solution
+    Solution generateRandomSolution(size_t maxDepth, size_t maxNodes);
 
     // Evaluate the solution
     virtual double evaluate(Solution* solution);

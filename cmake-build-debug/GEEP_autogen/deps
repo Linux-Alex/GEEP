@@ -54,6 +54,7 @@ GEEP_autogen/timestamp: \
 	/home/aleks/GEEP/GEEP/src/helpers/NumberConversions.cpp \
 	/home/aleks/GEEP/GEEP/src/helpers/NumberConversions.h \
 	/home/aleks/GEEP/GEEP/src/main.cpp \
+	/home/aleks/GEEP/GEEP/src/nodes/FunctionFactory.h \
 	/home/aleks/GEEP/GEEP/src/nodes/FunctionNode.cpp \
 	/home/aleks/GEEP/GEEP/src/nodes/FunctionNode.h \
 	/home/aleks/GEEP/GEEP/src/nodes/Node.cpp \

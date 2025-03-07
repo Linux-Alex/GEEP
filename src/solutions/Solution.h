@@ -17,7 +17,9 @@ protected:
     size_t id;
 
     std::vector<double> values;
-    std::vector<Solution*> parents;
+    std::vector<Solution*> ancestors;
+
+    std::unique_ptr<Node> root; // Root of the expression tree
 
 private:
     // Auto incrementing ID counter
@@ -30,17 +32,20 @@ public:
     // Copy constructor
     Solution(const Solution& other);
 
-    // Add parents
-    void addParent(Solution* parent);
-    void addParents(const std::vector<Solution*>& parents);
+    // Add ancestors
+    void addAncestor(Solution* ancestor);
+    void addAncestor(const std::vector<Solution*>& ancestors);
 
     // Set parents
-    void setParent(Solution* parent);
-    void setParents(const std::vector<Solution*>& parents);
+    void setAncestor(Solution* ancestor);
+    void setAncestors(const std::vector<Solution*>& ancestors);
 
     // Set values
     void setValue(double value);
     void setValues(const std::vector<double>& values);
+
+    // Set root
+    void setRoot(std::unique_ptr<Node> root);
 
     // Generate random solution
     Solution& generateRandomSolution(std::vector<FunctionFactory> *functionSet, std::vector<TerminalNode*> *terminalSet);
@@ -48,7 +53,7 @@ public:
     // Getters
     size_t getId() const { return id; }
     const std::vector<double>& getValues() const { return values; }
-    const std::vector<Solution*>& getParents() const { return parents; }
+    const std::vector<Solution*>& getAncestors() const { return ancestors; }
 
     // Setters
     void setId(size_t id) { this->id = id; }

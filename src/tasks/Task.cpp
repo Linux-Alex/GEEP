@@ -35,7 +35,10 @@ void Task::run() {
 
     // Initialize the population
     for (size_t i = 0; i < problem->getPopulationSize(); i++) {
-        solutions.push_back(new Solution());
+        // solutions.push_back((new Solution())->generateRandomSolution(
+        //     problem->getFunctionSet(),
+        //     problem->getTerminalSet()
+        // ));
     }
 
     // Run the task
