@@ -12,6 +12,7 @@
 
 #include "ObjectiveType.h"
 #include "../criterions/StopCriterion.h"
+#include "../nodes/FunctionFactory.h"
 #include "../nodes/FunctionNode.h"
 #include "../nodes/TerminalNode.h"
 #include "../solutions/Solution.h"
@@ -43,8 +44,6 @@ protected:
     std::chrono::seconds stopCritTime;
 
     // Function set
-    // std::vector<FunctionNode*> functionSet;
-    using FunctionFactory = std::function<std::unique_ptr<FunctionNode>()>;
     std::vector<FunctionFactory> functionSet;
 
     // Terminal set
@@ -68,6 +67,7 @@ public:
     const std::string& getDescription() const { return description; }
     StopCriterion getStopCrit() const { return stopCrit; }
     size_t getStopCritMaxEvaluations() const { return stopCritMaxEvaluations; }
+    size_t getPopulationSize() const { return populationSize; }
 
 
     // Setters
@@ -78,6 +78,7 @@ public:
     void setStopCritMaxEvaluations(size_t stopCritMaxEvaluations) { this->stopCritMaxEvaluations = stopCritMaxEvaluations; }
     void setFunctionSet(std::vector<FunctionFactory> functionSet) { this->functionSet = functionSet; }
     void setTerminalSet(std::vector<TerminalNode*> terminalSet) { this->terminalSet = terminalSet; }
+    void setPopulationSize(size_t populationSize) { this->populationSize = populationSize; }
 
     // Evaluate the solution
     virtual double evaluate(Solution* solution);

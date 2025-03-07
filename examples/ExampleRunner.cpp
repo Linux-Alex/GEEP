@@ -7,6 +7,8 @@
 // ExampleRunner.cpp
 #include "ExampleRunner.h"
 
+#include "LogHelper.h"
+
 // Run a program or XML example based on the input string
 void ExampleRunner::run(const std::string& input) {
     if (input.rfind("p:", 0) == 0) { // Check if input starts with "p:"
@@ -89,7 +91,7 @@ void ExampleRunner::runProgram(const std::string& programName) {
     const auto& programMap = getProgramMap();
     auto it = programMap.find(programName);
     if (it != programMap.end()) {
-        std::cout << "Running program: " << programName << std::endl;
+        LogHelper::logMessage("Program selected: " + programName);
         it->second(); // Call the run function
     } else {
         std::cerr << "Program not found: " << programName << std::endl;

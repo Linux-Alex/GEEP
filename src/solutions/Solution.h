@@ -8,6 +8,10 @@
 #include <atomic>
 #include <vector>
 
+#include "../nodes/FunctionFactory.h"
+#include "../nodes/FunctionNode.h"
+#include "../nodes/TerminalNode.h"
+
 class Solution {
 protected:
     size_t id;
@@ -37,6 +41,9 @@ public:
     // Set values
     void setValue(double value);
     void setValues(const std::vector<double>& values);
+
+    // Generate random solution
+    Solution& generateRandomSolution(std::vector<FunctionFactory> *functionSet, std::vector<TerminalNode*> *terminalSet);
 
     // Getters
     size_t getId() const { return id; }

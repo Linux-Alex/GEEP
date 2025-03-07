@@ -53,6 +53,7 @@ add_executable(GEEP src/main.cpp
         src/targets/Target.h
         src/cuda/CudaUtils.cu
         src/cuda/CudaUtils.h
+        src/nodes/FunctionFactory.h
 )
 
 set_target_properties(GEEP PROPERTIES

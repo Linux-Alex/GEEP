@@ -26,8 +26,9 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     Task symbolicRegressionTask("Symbolic regression");
 
     // Create a new problem
-    SymbolicRegressionProblem problem("Find function", StopCriterion::EVALUATIONS, 1, {10.0}, {-10.0}, ObjectiveType::MINIMIZE);
+    SymbolicRegressionProblem problem("Find function by target data");
     problem.setStopCritMaxEvaluations(10000);
+    problem.setPopulationSize(100);
 
     problem.setFunctionSet({
         []() { return std::make_unique<AddOperator>(); },
@@ -47,13 +48,11 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
         Target().setCondition("x", 5.0).setTargetValue(36.0),
     });
 
-
-
     // Add the problem to the program
     symbolicRegressionTask.setProblem(&problem);
 
-    // Run the program
     try {
+        // Run the program
         symbolicRegressionTask.run();
     } catch (std::exception &e) {
         LogHelper::logMessage("Error running symbolic regression program: " + std::string(e.what()), true);
@@ -61,6 +60,4 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     }
 
     LogHelper::logMessage("Symbolic regression program finished.");
-
-
 }
