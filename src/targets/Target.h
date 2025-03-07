@@ -9,10 +9,16 @@
 
 
 class Target {
-private:
-    std::map<std::string, double> variables;
+protected:
+    std::map<std::string, double> state;
     double targetValue;
 
+public:
+    Target();
+    Target(const std::map<std::string, double> &state, double targetValue);
+
+    Target& setCondition(const std::string &key, double value);
+    Target& setTargetValue(double targetValue);
 };
 
 

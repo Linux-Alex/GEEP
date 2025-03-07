@@ -69,7 +69,7 @@ I am a master's student at the University of Maribor, Faculty of Electrical Engi
 
 The idea for GEEP originated two years ago during my studies at FERI, in the course *Introduction to Evolutionary Algorithms*. Genetic programming fascinated me because it offers greater control over the optimization process compared to neural networks and allows for the seamless transfer of natural concepts into algorithms. This approach is particularly useful for scientists from other fields who seek efficient and understandable methods for modeling complex problems.
 
-The name **GEEP** is inspired by the biological phenomenon of a **sheep-goat hybrid**, known for its rarity and unique characteristics. Analogously, GEEP combines diverse approaches to genetic programming into a unified, powerful framework ([Logo idea](assets/logo.png))
+The name **GEEP** is inspired by the biological phenomenon of a **sheep-goat hybrid**, known for its rarity and unique characteristics. Analogously, GEEP combines diverse approaches to genetic programming into a unified, powerful framework ([logo idea](assets/logo.png)).
 
 ## 📄 License
 

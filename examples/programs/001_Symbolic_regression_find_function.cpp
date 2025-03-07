@@ -39,6 +39,13 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
         new ConstNode(),
     });
 
+    problem.setTargets({
+        Target().setCondition("x", 1.0).setTargetValue(4.0),
+        Target().setCondition("x", 2.0).setTargetValue(9.0),
+        Target().setCondition("x", 3.0).setTargetValue(16.0),
+        Target().setCondition("x", 4.0).setTargetValue(25.0),
+        Target().setCondition("x", 5.0).setTargetValue(36.0),
+    });
 
 
 
@@ -46,7 +53,12 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     symbolicRegressionTask.setProblem(&problem);
 
     // Run the program
-    symbolicRegressionTask.run();
+    try {
+        symbolicRegressionTask.run();
+    } catch (std::exception &e) {
+        LogHelper::logMessage("Error running symbolic regression program: " + std::string(e.what()), true);
+        return;
+    }
 
     LogHelper::logMessage("Symbolic regression program finished.");
 
