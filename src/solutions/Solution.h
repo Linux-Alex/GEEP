@@ -22,6 +22,9 @@ protected:
 
     std::unique_ptr<Node> root; // Root of the expression tree
 
+    // Fitness
+    double fitness;
+
 private:
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
@@ -47,6 +50,10 @@ public:
 
     // Set root
     void setRoot(std::unique_ptr<Node> root);
+
+    // Fitness getter and setter
+    double getFitness() const { return fitness; }
+    void setFitness(double fitness) { this->fitness = fitness; }
 
     // Generate random solution
     Solution& generateRandomSolution(std::vector<FunctionFactory> *functionSet, std::vector<TerminalFactory> *terminalSet);

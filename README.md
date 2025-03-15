@@ -21,7 +21,7 @@ We are actively working on building the core functionalities, including classes,
 **Prerequisites:**
 - **CUDA Toolkit:** Ensure CUDA is installed on your system.
 - **C++ Compiler:** A modern C++ compiler (e.g., GCC, Clang, or MSVC).
-- **Optional:** Qt for the graphical interface.
+- **Optional:** Mandatory for the graphical interface and core functionality.
 
 **Installation:**
 

@@ -16,6 +16,7 @@
 #include "../nodes/FunctionNode.h"
 #include "../nodes/TerminalFactory.h"
 #include "../nodes/TerminalNode.h"
+#include "../selections/Selection.h"
 #include "../solutions/Solution.h"
 
 class Problem {
@@ -28,7 +29,6 @@ private:
     std::string description;
 
 protected:
-
     // Population size
     size_t populationSize;
 
@@ -43,6 +43,9 @@ protected:
 
     // Terminal set
     std::vector<TerminalFactory> terminalSet;
+
+    // Selection method
+    Selection *selection;
 
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
@@ -83,6 +86,10 @@ public:
     void setFunctionSet(std::vector<FunctionFactory> functionSet) { this->functionSet = functionSet; }
     void setTerminalSet(std::vector<TerminalFactory> terminalSet) { this->terminalSet = terminalSet; }
     void setPopulationSize(size_t populationSize) { this->populationSize = populationSize; }
+
+    // Selection method
+    Problem& setSelection(Selection* selection) { this->selection = selection; return *this; }
+    Selection* getSelection() { return selection; }
 
     // Generate random solution
     Solution generateRandomSolution(size_t maxDepth, size_t maxNodes);

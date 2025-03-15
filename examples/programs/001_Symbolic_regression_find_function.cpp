@@ -12,6 +12,7 @@
 #include "../../src/nodes/terminals/VariableNode.h"
 #include "../../src/nodes/terminals/ConstNode.h"
 #include "../../src/problems/SymbolicRegressionProblem.h"
+#include "../../src/selections/TournamentSelection.h"
 #include "../../src/tasks/Task.h"
 
 /**
@@ -28,6 +29,7 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     // Create a new problem
     SymbolicRegressionProblem problem("Find function by target data");
     problem.setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1000));
+    problem.setSelection(new TournamentSelection(3));
     problem.setPopulationSize(100);
 
     problem.setFunctionSet({

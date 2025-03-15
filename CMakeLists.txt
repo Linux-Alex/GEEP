@@ -57,6 +57,12 @@ add_executable(GEEP src/main.cpp
         src/nodes/TerminalFactory.h
         src/criterions/StopCriterion.cpp
         src/criterions/StopCriterion.h
+        src/selections/Selection.cpp
+        src/selections/Selection.h
+        src/selections/TournamentSelection.cpp
+        src/selections/TournamentSelection.h
+        src/selections/RouletteWheelSelection.cpp
+        src/selections/RouletteWheelSelection.h
 )
 
 set_target_properties(GEEP PROPERTIES
