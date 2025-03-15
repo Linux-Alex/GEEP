@@ -9,6 +9,7 @@
 #include <vector>
 #include <atomic>
 #include <map>
+#include <memory>
 
 // Abstract class representing a node in a tree
 class Node {
@@ -29,6 +30,9 @@ public:
 
     // Destructor
     virtual ~Node() = default;
+
+    // Clone method for deep copying
+    virtual std::unique_ptr<Node> clone() const = 0;
 
     // Set parent
     void setParent(Node *parent);

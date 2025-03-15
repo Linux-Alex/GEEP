@@ -18,6 +18,11 @@ public:
     using TerminalNode::TerminalNode;
     VariableNode(const std::string &variableName);
 
+    // Clone method
+    std::unique_ptr<Node> clone() const override {
+        return std::make_unique<VariableNode>(variableName);
+    }
+
     // Evaluate the expression
     double evaluate(const std::map<std::string, double>& variables) const override;
 

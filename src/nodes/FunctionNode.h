@@ -26,6 +26,9 @@ public:
     // Destructor
     ~FunctionNode();
 
+    // Clone method
+    virtual std::unique_ptr<Node> clone() const override = 0;
+
     // Add a child to the node
     void addChild(Node *child);
     void addChildren(const std::vector<Node*>& children);
@@ -39,6 +42,11 @@ public:
     // Set limits
     void setLimits(size_t* childLowerLimit, size_t* childUpperLimit);
 
+    // Evaluate the function
+    double evaluate(const std::map<std::string, double>& variables) const override = 0;
+
+    // To string
+    std::string toString() const override = 0;
 };
 
 

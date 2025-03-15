@@ -35,19 +35,31 @@ void Task::run() {
 
     // Initialize the population
     for (size_t i = 0; i < problem->getPopulationSize(); i++) {
-        // solutions.push_back((new Solution())->generateRandomSolution(
-        //     problem->getFunctionSet(),
-        //     problem->getTerminalSet()
-        // ));
+        Solution* solution = new Solution(problem->generateRandomSolution(5, 16));
+        solutions.push_back(solution);
     }
 
     // Run the task
     while (evaluations < problem->getStopCritMaxEvaluations()) {
-
+        // Evaluate solutions
+        for (auto& solution : solutions) {
+            double fitness = problem->evaluate(solution);
+            // Update solution fitness
+        }
 
         evaluations++;
     }
 
-    throw std::runtime_error("Task::run() not implemented.");
+    // Clean up dynamic memory
+    for (auto& solution : solutions) {
+        delete solution;
+    }
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
+    LogHelper::logMessage("Task " + std::to_string(id) + " finished in " + std::to_string(duration) + " ms.");
+
+    // throw std::runtime_error("Task::run() not implemented.");
 
 }

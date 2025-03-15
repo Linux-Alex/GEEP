@@ -22,6 +22,15 @@ public:
     // Constructor with parent and children
     MultiplyOperator(Node* parent, const std::vector<Node*>& children);
 
+    // Clone method
+    std::unique_ptr<Node> clone() const override {
+        auto clonedNode = std::make_unique<MultiplyOperator>();
+        for (const auto& child: children) {
+            clonedNode->addChild(child->clone().release());
+        }
+        return clonedNode;
+    }
+
     // Evaluate
     double evaluate(const std::map<std::string, double> &variables) const override;
 

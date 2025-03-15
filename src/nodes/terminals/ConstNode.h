@@ -21,6 +21,12 @@ public:
     // Inherit constructors
     using TerminalNode::TerminalNode;
     ConstNode();
+    explicit ConstNode(double value) : TerminalNode("ConstNode", nullptr), value(value) {}
+
+    // Clone method
+    std::unique_ptr<Node> clone() const override {
+        return std::make_unique<ConstNode>(value);
+    }
 
     // Evaluate
     double evaluate(const std::map<std::string, double>& variables) const override;
