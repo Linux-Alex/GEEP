@@ -24,7 +24,7 @@ add_executable(GEEP src/main.cpp
         src/nodes/functions/AddOperator.h
         src/solutions/Solution.cpp
         src/solutions/Solution.h
-        src/criterions/StopCriterion.h
+        src/criterions/StopCriterionType.h
         src/tasks/Task.cpp
         src/tasks/Task.h
         src/problems/Problem.cpp
@@ -55,6 +55,8 @@ add_executable(GEEP src/main.cpp
         src/cuda/CudaUtils.h
         src/nodes/FunctionFactory.h
         src/nodes/TerminalFactory.h
+        src/criterions/StopCriterion.cpp
+        src/criterions/StopCriterion.h
 )
 
 set_target_properties(GEEP PROPERTIES

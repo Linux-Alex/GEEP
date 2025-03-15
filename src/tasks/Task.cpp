@@ -30,8 +30,16 @@ void Task::run() {
     // Initialize evaluation counter
     size_t evaluations = 0;
 
+    // Initialize generation counter
+    size_t generations = 0;
+
     // Temporary solutions
     std::vector<Solution *> solutions;
+
+    // Check if population size is set
+    if (problem->getPopulationSize() == 0) {
+        throw std::runtime_error("Population size not set.");
+    }
 
     // Initialize the population
     for (size_t i = 0; i < problem->getPopulationSize(); i++) {
@@ -40,14 +48,30 @@ void Task::run() {
     }
 
     // Run the task
-    while (evaluations < problem->getStopCritMaxEvaluations()) {
+    while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
         // Evaluate solutions
         for (auto& solution : solutions) {
             double fitness = problem->evaluate(solution);
-            // Update solution fitness
+            evaluations++;
         }
 
-        evaluations++;
+        // Reproduction
+        std::vector<Solution *> newSolutions;
+        for (size_t i = 0; i < problem->getPopulationSize(); i++) {
+            // Select parents
+            Solution* parent1 = solutions[rand() % solutions.size()];
+            Solution* parent2 = solutions[rand() % solutions.size()];
+
+            // TODO: Crossover
+            // Solution* child = new Solution(parent1->crossover(parent2));
+
+            // TODO: Mutate
+            // child->mutate();
+
+            // TODO: Add the child to the new solutions
+            // newSolutions.push_back(child);
+        }
+        generations++;
     }
 
     // Clean up dynamic memory

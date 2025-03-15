@@ -38,12 +38,6 @@ protected:
     // Stop criterion
     StopCriterion stopCrit;
 
-    // Max number of evaluations or iterations or MSE less than threshold or time
-    size_t stopCritMaxIterations;
-    size_t stopCritMaxEvaluations;
-    double stopCritMinMse;
-    std::chrono::seconds stopCritTime;
-
     // Function set
     std::vector<FunctionFactory> functionSet;
 
@@ -77,7 +71,6 @@ public:
     const std::string& getShortName() const { return shortName; }
     const std::string& getDescription() const { return description; }
     StopCriterion getStopCrit() const { return stopCrit; }
-    size_t getStopCritMaxEvaluations() const { return stopCritMaxEvaluations; }
     size_t getPopulationSize() const { return populationSize; }
     const std::vector<FunctionFactory>& getFunctionSet() const { return functionSet; }
     const std::vector<TerminalFactory>& getTerminalSet() const { return terminalSet; }
@@ -87,7 +80,6 @@ public:
     void setShortName(const std::string& shortName) { this->shortName = shortName; }
     void setDescription(const std::string& description) { this->description = description; }
     void setStopCrit(StopCriterion stopCrit) { this->stopCrit = stopCrit; }
-    void setStopCritMaxEvaluations(size_t stopCritMaxEvaluations) { this->stopCritMaxEvaluations = stopCritMaxEvaluations; }
     void setFunctionSet(std::vector<FunctionFactory> functionSet) { this->functionSet = functionSet; }
     void setTerminalSet(std::vector<TerminalFactory> terminalSet) { this->terminalSet = terminalSet; }
     void setPopulationSize(size_t populationSize) { this->populationSize = populationSize; }

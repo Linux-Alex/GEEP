@@ -27,7 +27,7 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
 
     // Create a new problem
     SymbolicRegressionProblem problem("Find function by target data");
-    problem.setStopCritMaxEvaluations(10000);
+    problem.setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1000));
     problem.setPopulationSize(100);
 
     problem.setFunctionSet({

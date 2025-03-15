@@ -20,7 +20,7 @@ REGISTER_PROGRAM(002_Symbolic_regression_minimize) {
     Task symbolicRegressionTask("Symbolic regression");
 
     // Create a new problem
-    Problem problem("Symbolic regression", StopCriterion::EVALUATIONS, 1, {10.0}, {-10.0}, ObjectiveType::MINIMIZE);
+    Problem problem("Symbolic regression", StopCriterion(), 1, {10.0}, {-10.0}, ObjectiveType::MINIMIZE);
 
     // Add the problem to the program
     symbolicRegressionTask.setProblem(&problem);
