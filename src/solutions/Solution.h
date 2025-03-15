@@ -10,6 +10,7 @@
 
 #include "../nodes/FunctionFactory.h"
 #include "../nodes/FunctionNode.h"
+#include "../nodes/TerminalFactory.h"
 #include "../nodes/TerminalNode.h"
 
 class Solution {
@@ -48,7 +49,7 @@ public:
     void setRoot(std::unique_ptr<Node> root);
 
     // Generate random solution
-    Solution& generateRandomSolution(std::vector<FunctionFactory> *functionSet, std::vector<TerminalNode*> *terminalSet);
+    Solution& generateRandomSolution(std::vector<FunctionFactory> *functionSet, std::vector<TerminalFactory> *terminalSet);
 
     // Getters
     size_t getId() const { return id; }

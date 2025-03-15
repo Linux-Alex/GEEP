@@ -60,8 +60,8 @@ int Problem::getRandomInt(int min, int max) {
 }
 
 // Helper function to generate a random terminal node
-TerminalNode* Problem::generateRandomTerminal(const std::vector<TerminalNode*>& terminalSet) {
-    return terminalSet[getRandomInt(0, terminalSet.size() - 1)];
+std::unique_ptr<TerminalNode> Problem::generateRandomTerminal(const std::vector<TerminalFactory> &terminalSet) {
+    return terminalSet[getRandomInt(0, terminalSet.size() - 1)](); // Call the factory function to create a new TerminalNode
 }
 
 // Helper function to generate a random function node
@@ -71,8 +71,8 @@ std::unique_ptr<FunctionNode> Problem::generateRandomFunction(const std::vector<
 
 // Recursive function to build expression tree
 std::unique_ptr<Node> Problem::buildRandomTree(const std::vector<FunctionFactory> &functionSet,
-                                      const std::vector<TerminalNode *> &terminalSet, size_t currentDepth,
-                                      size_t maxDepth, size_t &nodeCount, size_t maxNodes) {
+                                               const std::vector<TerminalFactory> &terminalSet, size_t currentDepth,
+                                               size_t maxDepth, size_t &nodeCount, size_t maxNodes) {
     // Check if the maximum numbers of nodes has been reached
     if (nodeCount >= maxNodes) {
         return nullptr;

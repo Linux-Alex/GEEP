@@ -13,7 +13,7 @@ std::atomic<size_t> Node::ID_COUNTER = 0; // Initialize static member
 // Node::Node(std::string name) :
 //         id(ID_COUNTER++), name(std::move(name)) { }
 
-Node::0Node(std::string name, Node *parent) : id(ID_COUNTER++), name(std::move(name)), parent(parent) { }
+Node::Node(std::string name, Node *parent) : id(ID_COUNTER++), name(std::move(name)), parent(parent) { }
 
 void Node::setParent(Node *parent) {
     this->parent = parent;

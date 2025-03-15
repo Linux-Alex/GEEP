@@ -36,8 +36,8 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     });
 
     problem.setTerminalSet({
-        new VariableNode("x"),
-        new ConstNode(),
+        []() { return std::make_unique<VariableNode>("x"); },
+        []() { return std::make_unique<ConstNode>(); },
     });
 
     problem.setTargets({
