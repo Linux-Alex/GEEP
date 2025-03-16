@@ -36,6 +36,9 @@ public:
     // Set children
     void setChildren(const std::vector<Node*>& children);
 
+    // Get children
+    const std::vector<Node*>& getChildren() const { return children; }
+
     // Get number of children
     size_t getNumChildren() const { return children.size(); }
 

@@ -29,6 +29,9 @@ private:
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
 
+    // Collect all nodes (helper function)
+    void collectNodes(Node* node, std::vector<Node*>& nodes);
+
 public:
     // Constructor
     Solution();
@@ -65,6 +68,9 @@ public:
 
     // Setters
     void setId(size_t id) { this->id = id; }
+
+    // Get random node from the tree
+    Node* getRandomNode();
 };
 
 

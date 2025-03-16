@@ -63,6 +63,10 @@ add_executable(GEEP src/main.cpp
         src/selections/TournamentSelection.h
         src/selections/RouletteWheelSelection.cpp
         src/selections/RouletteWheelSelection.h
+        src/crossover/Crossover.cpp
+        src/crossover/Crossover.h
+        src/crossover/SubtreeCrossover.cpp
+        src/crossover/SubtreeCrossover.h
 )
 
 set_target_properties(GEEP PROPERTIES

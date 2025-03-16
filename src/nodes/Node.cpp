@@ -18,3 +18,4 @@ Node::Node(std::string name, Node *parent) : id(ID_COUNTER++), name(std::move(na
 void Node::setParent(Node *parent) {
     this->parent = parent;
 }
+
