@@ -50,14 +50,14 @@ void Solution::setValue(double value) { values.push_back(value); }
 
 void Solution::setValues(const std::vector<double> &values) { this->values = values; }
 
-void Solution::setRoot(std::unique_ptr<Node> root) { this->root = std::move(root); }
+void Solution::setRoot(Node* root) { this->root = std::move(root); }
 
 Node * Solution::getRandomNode() {
     if (!root)
         return nullptr;
 
     std::vector<Node *> nodes;
-    collectNodes(root.get(), nodes);
+    collectNodes(root, nodes);
 
     // Randomly select a node
     size_t index = rand() % nodes.size();

@@ -70,9 +70,9 @@ std::unique_ptr<FunctionNode> Problem::generateRandomFunction(const std::vector<
 }
 
 // Recursive function to build expression tree
-std::unique_ptr<Node> Problem::buildRandomTree(const std::vector<FunctionFactory> &functionSet,
-                                               const std::vector<TerminalFactory> &terminalSet, size_t currentDepth,
-                                               size_t maxDepth, size_t &nodeCount, size_t maxNodes) {
+Node *Problem::buildRandomTree(const std::vector<FunctionFactory> &functionSet,
+                               const std::vector<TerminalFactory> &terminalSet, size_t currentDepth,
+                               size_t maxDepth, size_t &nodeCount, size_t maxNodes) {
     // Check if the maximum numbers of nodes has been reached
     if (nodeCount >= maxNodes) {
         return nullptr;
@@ -82,7 +82,8 @@ std::unique_ptr<Node> Problem::buildRandomTree(const std::vector<FunctionFactory
     if ((currentDepth >= maxDepth) || (getRandomInt(0, 1) == 0)) {
         // Create a terminal node
         nodeCount++;
-        return std::unique_ptr<Node>(generateRandomTerminal(terminalSet));
+        return generateRandomTerminal(terminalSet).release();
+        // return std::unique_ptr<Node>(generateRandomTerminal(terminalSet));
     }
     else {
         // Create a function node
@@ -94,7 +95,7 @@ std::unique_ptr<Node> Problem::buildRandomTree(const std::vector<FunctionFactory
             auto child = buildRandomTree(functionSet, terminalSet, currentDepth + 1, maxDepth, nodeCount, maxNodes);
 
             if (child) {
-                functionNode->addChild(child.release());
+                functionNode->addChild(child);
             }
             else {
                 // Stop building children if the maximum number of nodes has been reached
@@ -102,6 +103,6 @@ std::unique_ptr<Node> Problem::buildRandomTree(const std::vector<FunctionFactory
             }
         }
 
-        return functionNode;
+        return functionNode.release();
     }
 }

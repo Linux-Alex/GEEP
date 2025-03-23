@@ -19,8 +19,9 @@ public:
     VariableNode(const std::string &variableName);
 
     // Clone method
-    std::unique_ptr<Node> clone() const override {
-        return std::make_unique<VariableNode>(variableName);
+    Node* clone() const override {
+        return new VariableNode(variableName);
+        //return std::make_unique<VariableNode>(variableName);
     }
 
     // Evaluate the expression

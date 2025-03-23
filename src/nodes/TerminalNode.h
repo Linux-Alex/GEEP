@@ -14,7 +14,13 @@ public:
     using Node::Node;
 
     // Clone method
-    virtual std::unique_ptr<Node> clone() const override = 0;
+    virtual Node* clone() const override = 0;
+
+    // Get random node
+    Node* getRandomNode() override;
+
+    // Get all nodes
+    std::vector<Node*> collectNodes() override;
 };
 
 

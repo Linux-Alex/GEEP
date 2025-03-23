@@ -2,8 +2,8 @@
 // Created by aleks on 27.2.2025.
 //
 
-#ifndef OPERATORNODE_H
-#define OPERATORNODE_H
+#ifndef FUNCTIONNODE_H
+#define FUNCTIONNODE_H
 
 #include <functional>
 #include <memory>
@@ -27,7 +27,7 @@ public:
     ~FunctionNode();
 
     // Clone method
-    virtual std::unique_ptr<Node> clone() const override = 0;
+    virtual Node* clone() const override = 0;
 
     // Add a child to the node
     void addChild(Node *child);
@@ -50,6 +50,12 @@ public:
 
     // To string
     std::string toString() const override = 0;
+
+    // Get random node
+    Node* getRandomNode() override;
+
+    // Get all nodes
+    std::vector<Node*> collectNodes() override;
 };
 
 

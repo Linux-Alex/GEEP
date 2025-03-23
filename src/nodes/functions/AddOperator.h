@@ -22,12 +22,12 @@ public:
     AddOperator(Node* parent, const std::vector<Node*>& children);
 
     // Clone method
-    std::unique_ptr<Node> clone() const override {
+    Node* clone() const override {
         auto clonedNode = std::make_unique<AddOperator>();
         for (const auto& child: children) {
-            clonedNode->addChild(child->clone().release());
+            clonedNode->addChild(child->clone());
         }
-        return clonedNode;
+        return clonedNode.release();
     }
 
     // Evaluate

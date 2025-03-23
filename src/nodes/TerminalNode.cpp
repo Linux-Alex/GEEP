@@ -3,3 +3,12 @@
 //
 
 #include "TerminalNode.h"
+
+Node * TerminalNode::getRandomNode() {
+    return this;
+}
+
+std::vector<Node *> TerminalNode::collectNodes() {
+    std::vector<Node*> nodes = { this };
+    return nodes;
+}

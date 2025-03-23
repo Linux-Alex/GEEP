@@ -20,7 +20,7 @@ protected:
     std::vector<double> values;
     std::vector<Solution*> ancestors;
 
-    std::unique_ptr<Node> root; // Root of the expression tree
+    Node* root; // Root of the expression tree
 
     // Fitness
     double fitness;
@@ -52,7 +52,7 @@ public:
     void setValues(const std::vector<double>& values);
 
     // Set root
-    void setRoot(std::unique_ptr<Node> root);
+    void setRoot(Node* root);
 
     // Fitness getter and setter
     double getFitness() const { return fitness; }
@@ -65,6 +65,7 @@ public:
     size_t getId() const { return id; }
     const std::vector<double>& getValues() const { return values; }
     const std::vector<Solution*>& getAncestors() const { return ancestors; }
+    Node* getRoot() const { return root; }
 
     // Setters
     void setId(size_t id) { this->id = id; }

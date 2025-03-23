@@ -60,3 +60,36 @@ void FunctionNode::setLimits(size_t *childLowerLimit, size_t *childUpperLimit) {
     this->childLowerLimit = childLowerLimit;
     this->childUpperLimit = childUpperLimit;
 }
+
+Node * FunctionNode::getRandomNode() {
+    std::vector<Node*> nodes = { this };
+
+    // Travel through the tree and collect all nodes
+    for (Node* child : children) {
+        if (child) {
+            std::vector<Node*> childNodes = child->collectNodes();
+            nodes.insert(nodes.end(), childNodes.begin(), childNodes.end());
+        }
+    }
+
+    // Randomly select a node
+    if (!nodes.empty()) {
+        size_t randomIndex = rand() % nodes.size();
+        return nodes[randomIndex];
+    }
+
+    return nullptr;
+}
+
+std::vector<Node *> FunctionNode::collectNodes() {
+    std::vector<Node*> nodes = { this };
+
+    for (Node* child : children) {
+        if (child) {
+            std::vector<Node*> childNodes = child->collectNodes();
+            nodes.insert(nodes.end(), childNodes.begin(), childNodes.end());
+        }
+    }
+
+    return nodes;
+}

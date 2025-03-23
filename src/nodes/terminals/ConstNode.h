@@ -24,8 +24,9 @@ public:
     explicit ConstNode(double value) : TerminalNode("ConstNode", nullptr), value(value) {}
 
     // Clone method
-    std::unique_ptr<Node> clone() const override {
-        return std::make_unique<ConstNode>(value);
+    Node* clone() const override {
+        return new ConstNode(value);
+        //return std::make_unique<ConstNode>(value);
     }
 
     // Evaluate

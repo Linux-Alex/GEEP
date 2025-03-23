@@ -55,10 +55,10 @@ private:
     static int getRandomInt(int min, int max);
     static std::unique_ptr<TerminalNode> generateRandomTerminal(const std::vector<TerminalFactory> &terminalSet);
     static std::unique_ptr<FunctionNode> generateRandomFunction(const std::vector<FunctionFactory>& functionSet);
-    static std::unique_ptr<Node> buildRandomTree(const std::vector<FunctionFactory>& functionSet,
-                                                 const std::vector<TerminalFactory> &terminalSet,
-                                                 size_t currentDepth, size_t maxDepth,
-                                                 size_t& nodeCount, size_t maxNodes);
+    static Node *buildRandomTree(const std::vector<FunctionFactory> &functionSet,
+                                 const std::vector<TerminalFactory> &terminalSet,
+                                 size_t currentDepth, size_t maxDepth,
+                                 size_t &nodeCount, size_t maxNodes);
 
 public:
     // Constructor

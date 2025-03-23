@@ -32,7 +32,7 @@ public:
     virtual ~Node() = default;
 
     // Clone method for deep copying
-    virtual std::unique_ptr<Node> clone() const = 0;
+    virtual Node* clone() const = 0;
 
     // Set parent
     void setParent(Node *parent);
@@ -42,6 +42,12 @@ public:
 
     // String representation
     virtual std::string toString() const = 0;
+
+    // Get random node
+    virtual Node* getRandomNode() = 0;
+
+    // Get all nodes
+    virtual std::vector<Node*> collectNodes() = 0;
 };
 
 
