@@ -62,14 +62,14 @@ void Task::run() {
             Solution* parent1 = solutions[rand() % solutions.size()];
             Solution* parent2 = solutions[rand() % solutions.size()];
 
-            // TODO: Crossover
-            // Solution* child = new Solution(parent1->crossover(parent2));
+            // TODO: Crossover (maby make more than one child)
+            Solution* child = problem->getCrossover()->crossover(parent1, parent2);
 
             // TODO: Mutate
             // child->mutate();
 
             // TODO: Add the child to the new solutions
-            // newSolutions.push_back(child);
+            newSolutions.push_back(child);
         }
         generations++;
     }

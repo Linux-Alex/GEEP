@@ -60,12 +60,12 @@ int Problem::getRandomInt(int min, int max) {
 }
 
 // Helper function to generate a random terminal node
-std::unique_ptr<TerminalNode> Problem::generateRandomTerminal(const std::vector<TerminalFactory> &terminalSet) {
+TerminalNode* Problem::generateRandomTerminal(const std::vector<TerminalFactory> &terminalSet) {
     return terminalSet[getRandomInt(0, terminalSet.size() - 1)](); // Call the factory function to create a new TerminalNode
 }
 
 // Helper function to generate a random function node
-std::unique_ptr<FunctionNode> Problem::generateRandomFunction(const std::vector<FunctionFactory>& functionSet) {
+FunctionNode* Problem::generateRandomFunction(const std::vector<FunctionFactory>& functionSet) {
     return functionSet[getRandomInt(0, functionSet.size() - 1)](); // Call the factory function to create a new FunctionNode
 }
 
@@ -73,36 +73,40 @@ std::unique_ptr<FunctionNode> Problem::generateRandomFunction(const std::vector<
 Node *Problem::buildRandomTree(const std::vector<FunctionFactory> &functionSet,
                                const std::vector<TerminalFactory> &terminalSet, size_t currentDepth,
                                size_t maxDepth, size_t &nodeCount, size_t maxNodes) {
-    // Check if the maximum numbers of nodes has been reached
+    // Check if the maximum number of nodes has been reached
     if (nodeCount >= maxNodes) {
         return nullptr;
     }
 
     // Decide whether to create a terminal or function node
-    if ((currentDepth >= maxDepth) || (getRandomInt(0, 1) == 0)) {
+    bool createTerminal = (currentDepth >= maxDepth) || (getRandomInt(0, 1) == 0);
+
+    if (createTerminal) {
         // Create a terminal node
+        auto terminalNode = generateRandomTerminal(terminalSet);
         nodeCount++;
-        return generateRandomTerminal(terminalSet).release();
-        // return std::unique_ptr<Node>(generateRandomTerminal(terminalSet));
+        return terminalNode;
     }
     else {
         // Create a function node
-        auto functionNode = generateRandomFunction(functionSet);
+        FunctionNode* functionNode = generateRandomFunction(functionSet);
         nodeCount++;
 
         // Recursively build children
-        for (size_t i = 0; i < functionNode->getNumChildren(); i++) {
-            auto child = buildRandomTree(functionSet, terminalSet, currentDepth + 1, maxDepth, nodeCount, maxNodes);
+        size_t numChildren = functionNode->getEstimatedNumberOfChildren();
+        for (size_t i = 0; i < functionNode->getEstimatedNumberOfChildren(); i++) {
+            Node* child = buildRandomTree(functionSet, terminalSet, currentDepth + 1, maxDepth, nodeCount, maxNodes);
 
             if (child) {
                 functionNode->addChild(child);
-            }
-            else {
-                // Stop building children if the maximum number of nodes has been reached
-                break;
+            } else {
+                // If no child is created, replace the function node with a terminal node
+                auto terminalNode = generateRandomTerminal(terminalSet);
+                nodeCount++; // Increment node count for the terminal node
+                return terminalNode;
             }
         }
 
-        return functionNode.release();
+        return functionNode;
     }
 }

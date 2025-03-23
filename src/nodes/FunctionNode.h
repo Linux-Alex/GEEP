@@ -40,7 +40,7 @@ public:
     const std::vector<Node*>& getChildren() const { return children; }
 
     // Get number of children
-    size_t getNumChildren() const { return children.size(); }
+    virtual size_t getNumChildren() const { return children.size(); }
 
     // Set limits
     void setLimits(size_t* childLowerLimit, size_t* childUpperLimit);
@@ -56,6 +56,9 @@ public:
 
     // Get all nodes
     std::vector<Node*> collectNodes() override;
+
+    // Virtual estimated number of children
+    virtual size_t getEstimatedNumberOfChildren() const { return 2; }
 };
 
 

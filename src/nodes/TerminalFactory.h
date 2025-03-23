@@ -10,6 +10,7 @@
 
 class TerminalNode;
 
-using TerminalFactory = std::function<std::unique_ptr<TerminalNode>()>;
+// using TerminalFactory = std::function<std::unique_ptr<TerminalNode>()>;
+using TerminalFactory = std::function<TerminalNode*()>;
 
 #endif //TERMINALFACTORY_H

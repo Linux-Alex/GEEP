@@ -35,6 +35,9 @@ public:
 
     // String output
     std::string toString() const override;
+
+    // Estimated number of children
+    size_t getNumChildren() const override { return 2; }
 };
 
 

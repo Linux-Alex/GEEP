@@ -2,7 +2,6 @@
 // Created by aleks on 1.3.2025.
 //
 
-// 001_Symbolic_regression.cpp
 #include "../ExampleRunner.h"
 #include "../LogHelper.h"
 #include <iostream>
@@ -14,6 +13,7 @@
 #include "../../src/problems/SymbolicRegressionProblem.h"
 #include "../../src/selections/TournamentSelection.h"
 #include "../../src/tasks/Task.h"
+#include "../../src/crossover/SubtreeCrossover.h"
 
 /**
  * PROBLEM DEFINITION: Find the function f(x) = x^2 + 2x + 1 using symbolic regression.
@@ -27,19 +27,20 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     Task symbolicRegressionTask("Symbolic regression");
 
     // Create a new problem
-    SymbolicRegressionProblem problem("Find function by target data");
-    problem.setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1000));
-    problem.setSelection(new TournamentSelection(3));
-    problem.setPopulationSize(100);
+    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find function by target data")
+        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1000))
+        .setSelection(new TournamentSelection(3))
+        .setCrossover(new SubtreeCrossover())
+        .setPopulationSize(100);
 
     problem.setFunctionSet({
-        []() { return std::make_unique<AddOperator>(); },
-        []() { return std::make_unique<MultiplyOperator>(); },
+        []() { return new AddOperator(); },
+        []() { return new MultiplyOperator(); },
     });
 
     problem.setTerminalSet({
-        []() { return std::make_unique<VariableNode>("x"); },
-        []() { return std::make_unique<ConstNode>(); },
+        []() { return new VariableNode("x"); },
+        []() { return new ConstNode(); },
     });
 
     problem.setTargets({

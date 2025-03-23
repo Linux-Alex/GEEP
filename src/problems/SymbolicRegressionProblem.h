@@ -21,6 +21,27 @@ public:
 
     // Set targets
     void setTargets(const std::vector<Target> &targets);
+
+    // Setters
+    SymbolicRegressionProblem& setStopCrit(StopCriterion stopCrit) {
+        Problem::setStopCrit(stopCrit);
+        return *this;
+    }
+
+    SymbolicRegressionProblem& setSelection(Selection* selection) {
+        Problem::setSelection(selection);
+        return *this;
+    }
+
+    SymbolicRegressionProblem& setCrossover(Crossover* crossover) {
+        Problem::setCrossover(crossover);
+        return *this;
+    }
+
+    SymbolicRegressionProblem& setPopulationSize(size_t populationSize) {
+        Problem::setPopulationSize(populationSize);
+        return *this;
+    }
 };
 
 

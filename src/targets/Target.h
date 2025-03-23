@@ -19,6 +19,9 @@ public:
 
     Target& setCondition(const std::string &key, double value);
     Target& setTargetValue(double targetValue);
+
+    const std::map<std::string, double>& getState() const { return state; }
+    const double getTargetValue() const { return targetValue; }
 };
 
 

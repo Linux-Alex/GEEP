@@ -10,6 +10,7 @@
 
 class FunctionNode;
 
-using FunctionFactory = std::function<std::unique_ptr<FunctionNode>()>;
+// using FunctionFactory = std::function<std::unique_ptr<FunctionNode>()>;
+using FunctionFactory = std::function<FunctionNode*()>;
 
 #endif //FUNCTIONFACTORY_H

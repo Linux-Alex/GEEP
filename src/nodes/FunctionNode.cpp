@@ -18,7 +18,7 @@ FunctionNode::~FunctionNode() {
 void FunctionNode::addChild(Node *child) {
     // If set limits, then check if the number of children (old and new) is within the limits
     if (childUpperLimit != nullptr && childLowerLimit != nullptr) {
-        if (this->children.size() + 1 < *childLowerLimit || this->children.size() + 1 > *childUpperLimit) {
+        if (this->children.size() + 1 > *childUpperLimit) {
             throw std::invalid_argument("Number of children is not within the limits.");
         }
     }
@@ -30,7 +30,7 @@ void FunctionNode::addChild(Node *child) {
 void FunctionNode::addChildren(const std::vector<Node *> &children) {
     // If set limits, then check if the number of children (old and new) is within the limits
     if (childUpperLimit != nullptr && childLowerLimit != nullptr) {
-        if (this->children.size() + children.size() < *childLowerLimit || this->children.size() + children.size() > *childUpperLimit) {
+        if (this->children.size() + children.size() > *childUpperLimit) {
             throw std::invalid_argument("Number of children is not within the limits.");
         }
     }
