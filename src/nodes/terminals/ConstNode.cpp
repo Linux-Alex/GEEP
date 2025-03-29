@@ -19,5 +19,7 @@ double ConstNode::evaluate(const std::map<std::string, double> &variables) const
 }
 
 std::string ConstNode::toString() const {
+    if (this->value < 0)
+        return "(" + NumberConversions::doubleToString(value) + ")";
     return NumberConversions::doubleToString(value);
 }

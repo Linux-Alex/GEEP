@@ -67,6 +67,8 @@ add_executable(GEEP src/main.cpp
         src/crossover/Crossover.h
         src/crossover/SubtreeCrossover.cpp
         src/crossover/SubtreeCrossover.h
+        src/nodes/functions/DivideOperator.cpp
+        src/nodes/functions/DivideOperator.h
 )
 
 set_target_properties(GEEP PROPERTIES

@@ -10,6 +10,7 @@
 #include "../../src/nodes/functions/MultiplyOperator.h"
 #include "../../src/nodes/terminals/VariableNode.h"
 #include "../../src/nodes/terminals/ConstNode.h"
+#include "../../src/nodes/functions/DivideOperator.h"
 #include "../../src/problems/SymbolicRegressionProblem.h"
 #include "../../src/selections/TournamentSelection.h"
 #include "../../src/tasks/Task.h"
@@ -39,6 +40,7 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     problem.setFunctionSet({
         []() { return new AddOperator(); },
         []() { return new MultiplyOperator(); },
+        []() { return new DivideOperator(); },
     });
 
     problem.setTerminalSet({
