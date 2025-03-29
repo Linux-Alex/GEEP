@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #include "StopCriterionType.h"
+#include "../../examples/LogHelper.h"
 
 class StopCriterion {
 private:
@@ -44,25 +45,33 @@ public:
         for (const auto& [type, threshold] : this->criteria) {
             switch (type) {
                 case EVALUATIONS: {
-                    if (evaluations >= threshold)
+                    if (evaluations >= threshold) {
+                        LogHelper::logMessage("Stop criterion met: EVALUATIONS");
                         return true;
+                    }
                     break;
                 }
                 case GENERATIONS: {
-                    if (generations >= threshold)
+                    if (generations >= threshold) {
+                        LogHelper::logMessage("Stop criterion met: GENERATIONS");
                         return true;
+                    }
                     break;
                 }
                 case MSE: {
-                    if (mse <= threshold)
+                    if (mse <= threshold) {
+                        LogHelper::logMessage("Stop criterion met: MSE");
                         return true;
+                    }
                     break;
                 }
                 case TIME: {
                     auto now = std::chrono::high_resolution_clock::now();
                     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
-                    if (elapsed >= threshold)
+                    if (elapsed >= threshold) {
+                        LogHelper::logMessage("Stop criterion met: TIME");
                         return true;
+                    }
                     break;
                 }
                 default: {

@@ -59,6 +59,12 @@ public:
 
     // Virtual estimated number of children
     virtual size_t getEstimatedNumberOfChildren() const { return 2; }
+
+    // Get depth
+    size_t getDepth() const override;
+
+    // Get number of nodes
+    size_t getNumOfNodes() const override;
 };
 
 

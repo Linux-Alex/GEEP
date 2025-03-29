@@ -93,3 +93,24 @@ std::vector<Node *> FunctionNode::collectNodes() {
 
     return nodes;
 }
+
+size_t FunctionNode::getDepth() const {
+    size_t maxDepth = 0;
+    for (const auto& child : children) {
+        size_t childDepth = child->getDepth();
+        if (childDepth > maxDepth) {
+            maxDepth = childDepth;
+        }
+    }
+    return maxDepth + 1; // +1 for the current node
+}
+
+size_t FunctionNode::getNumOfNodes() const {
+    size_t count = 1; // Also count this node
+
+    for (const auto& child : children) {
+        count += child->getNumOfNodes();
+    }
+
+    return count;
+}

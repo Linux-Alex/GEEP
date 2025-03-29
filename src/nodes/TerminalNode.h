@@ -21,6 +21,12 @@ public:
 
     // Get all nodes
     std::vector<Node*> collectNodes() override;
+
+    // Get depth
+    size_t getDepth() const override;
+
+    // Get number of nodes
+    size_t getNumOfNodes() const override;
 };
 
 

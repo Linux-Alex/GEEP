@@ -13,6 +13,8 @@ std::atomic<size_t> Problem::ID_COUNTER = 0; // Initialize static member
 Problem::Problem(std::string name) : id(Problem::ID_COUNTER++), name(std::move(name)) {
     this->shortName = std::to_string(Problem::ID_COUNTER);
     this->elitism = 0;
+    this->maxDepth = 0;
+    this->maxNodes = 0;
 }
 
 Problem::Problem(std::string name, StopCriterion stopCrit, size_t dimensions, const std::vector<double> &upperLimits,
@@ -21,6 +23,8 @@ Problem::Problem(std::string name, StopCriterion stopCrit, size_t dimensions, co
     this->stopCrit = stopCrit;
     this->objectiveType = objectiveType;
     this->elitism = 0;
+    this->maxDepth = 0;
+    this->maxNodes = 0;
 }
 
 Problem::Problem(std::string name, std::string shortName, std::string description, StopCriterion stopCrit,
@@ -30,6 +34,19 @@ Problem::Problem(std::string name, std::string shortName, std::string descriptio
     this->shortName = std::move(shortName);
     this->description = std::move(description);
     this->elitism = 0;
+    this->maxDepth = 0;
+    this->maxNodes = 0;
+}
+
+bool Problem::isInBounds(Solution *solution) {
+    if (solution->getRoot() == nullptr) {
+        return false;
+    }
+
+    size_t nodeCount = solution->getRoot()->getNumOfNodes();
+    size_t depth = solution->getRoot()->getDepth();
+
+    return (depth <= maxDepth && nodeCount <= maxNodes);
 }
 
 Solution Problem::generateRandomSolution(size_t maxDepth, size_t maxNodes) {

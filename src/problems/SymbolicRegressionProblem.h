@@ -47,6 +47,16 @@ public:
         Problem::setElitism(elitism);
         return *this;
     }
+
+    SymbolicRegressionProblem& setMaxDepth(size_t maxDepth) {
+        Problem::setMaxDepth(maxDepth);
+        return *this;
+    }
+
+    SymbolicRegressionProblem& setMaxNodes(size_t maxNodes) {
+        Problem::setMaxNodes(maxNodes);
+        return *this;
+    }
 };
 
 

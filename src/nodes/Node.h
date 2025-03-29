@@ -48,6 +48,12 @@ public:
 
     // Get all nodes
     virtual std::vector<Node*> collectNodes() = 0;
+
+    // Virtual get depth
+    virtual size_t getDepth() const = 0;
+
+    // Virtual get number of nodes
+    virtual size_t getNumOfNodes() const = 0;
 };
 
 

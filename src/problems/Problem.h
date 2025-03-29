@@ -54,6 +54,10 @@ protected:
     // Elitism
     size_t elitism;
 
+    // Max depth and max nodes
+    size_t maxDepth;
+    size_t maxNodes;
+
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
 
@@ -109,6 +113,15 @@ public:
     // Elitism
     Problem& setElitism(size_t elitism) { this->elitism = elitism; return *this; }
     size_t getElitism() const { return elitism; }
+
+    // Max depth and max nodes
+    Problem& setMaxDepth(size_t maxDepth) { this->maxDepth = maxDepth; return *this; }
+    size_t getMaxDepth() const { return maxDepth; }
+    Problem& setMaxNodes(size_t maxNodes) { this->maxNodes = maxNodes; return *this; }
+    size_t getMaxNodes() const { return maxNodes; }
+
+    // Check if solution is in bounds (max depth and max nodes)
+    bool isInBounds(Solution* solution);
 
     // Generate random solution
     Solution generateRandomSolution(size_t maxDepth, size_t maxNodes);

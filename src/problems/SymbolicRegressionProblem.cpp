@@ -11,9 +11,7 @@ double SymbolicRegressionProblem::evaluate(Solution *solution) {
 
     double fitness = 0.0;
 
-    // TODO: Implement the evaluation of the solution
-
-    for (const Target& target : targets) {
+    for (const Target& target : this->targets) {
         // Target input state
         const std::map<std::string, double>& state = target.getState();
 
@@ -32,10 +30,7 @@ double SymbolicRegressionProblem::evaluate(Solution *solution) {
     }
 
     // Return the fitness (lower is better)
-    return fitness;
-
-    // Default implementation
-    // throw std::runtime_error("SymbolicRegressionProblem::evaluate() not implemented.");
+    return fitness / (double)this->targets.size();
 }
 
 void SymbolicRegressionProblem::setTargets(const std::vector<Target> &targets) { this->targets = targets; }

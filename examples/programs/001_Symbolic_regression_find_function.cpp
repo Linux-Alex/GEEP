@@ -32,6 +32,8 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
         .setElitism(5)
         .setSelection(new TournamentSelection(3))
         .setCrossover(new SubtreeCrossover())
+        .setMaxDepth(5)
+        .setMaxNodes(16)
         .setPopulationSize(100);
 
     problem.setFunctionSet({

@@ -43,7 +43,7 @@ void Task::run() {
 
     // Initialize the population
     for (size_t i = 0; i < problem->getPopulationSize(); i++) {
-        Solution* solution = new Solution(problem->generateRandomSolution(5, 16));
+        Solution* solution = new Solution(problem->generateRandomSolution(problem->getMaxDepth(), problem->getMaxNodes()));
         solutions.push_back(solution);
     }
 
@@ -65,6 +65,20 @@ void Task::run() {
         // Reproduction
         std::vector<Solution *> newSolutions;
 
+        // Elitism
+        size_t elitism = problem->getElitism();
+        if (elitism > 0) {
+            // Sort solutions by fitness
+            std::sort(solutions.begin(), solutions.end(), [](Solution* a, Solution* b) {
+                return a->getFitness() < b->getFitness();
+            });
+
+            // Add the best solutions to the new population
+            for (size_t i = 0; i < elitism && i < solutions.size(); i++) {
+                newSolutions.push_back(solutions[i]);
+            }
+        }
+
         while (newSolutions.size() < problem->getPopulationSize()) {
             // Select parents
             Solution* parent1 = problem->getSelection()->select(solutions);
@@ -76,14 +90,26 @@ void Task::run() {
                 // child->mutate();
 
                 if (newSolutions.size() < problem->getPopulationSize()) {
-                    newSolutions.push_back(child);
+                    // Check if the solutions is in bounds with max depth and max nodes
+                    if (problem->isInBounds(child)) {
+                        // Add the child to the new population
+                        newSolutions.push_back(child);
+                    }
+                    else {
+                        // If not, delete the child
+                        delete child;
+                    }
                 }
             }
         }
 
         // Replace the old solutions with the new ones
         for (auto& solution : solutions) {
-            delete solution;
+            // Check if solution is not in newSolutions
+            if (std::find(newSolutions.begin(), newSolutions.end(), solution) == newSolutions.end()) {
+                // If not, delete the old solution
+                delete solution;
+            }
         }
         solutions = newSolutions;
 

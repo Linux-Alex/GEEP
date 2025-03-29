@@ -12,3 +12,11 @@ std::vector<Node *> TerminalNode::collectNodes() {
     std::vector<Node*> nodes = { this };
     return nodes;
 }
+
+size_t TerminalNode::getDepth() const {
+    return 1;
+}
+
+size_t TerminalNode::getNumOfNodes() const {
+    return 1;
+}
