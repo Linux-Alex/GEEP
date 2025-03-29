@@ -12,7 +12,7 @@ public:
     virtual ~Crossover() = default;
 
     // Method for performing crossover
-    virtual Solution* crossover(Solution* parent1, Solution* parent2) = 0;
+    virtual std::vector<Solution*> crossover(Solution* parent1, Solution* parent2) = 0;
 };
 
 

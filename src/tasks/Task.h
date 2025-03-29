@@ -41,6 +41,9 @@ public:
 
     // Run the task
     void run();
+
+    // Find best solution
+    Solution* findBestSolution(const std::vector<Solution*>& solutions);
 };
 
 

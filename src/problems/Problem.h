@@ -51,6 +51,9 @@ protected:
     // Crossover method
     Crossover *crossover;
 
+    // Elitism
+    size_t elitism;
+
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
 
@@ -102,6 +105,10 @@ public:
     // Crossover method
     Problem& setCrossover(Crossover* crossover) { this->crossover = crossover; return *this; }
     Crossover* getCrossover() { return crossover; }
+
+    // Elitism
+    Problem& setElitism(size_t elitism) { this->elitism = elitism; return *this; }
+    size_t getElitism() const { return elitism; }
 
     // Generate random solution
     Solution generateRandomSolution(size_t maxDepth, size_t maxNodes);

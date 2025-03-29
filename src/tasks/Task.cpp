@@ -52,27 +52,58 @@ void Task::run() {
         // Evaluate solutions
         for (auto& solution : solutions) {
             double fitness = problem->evaluate(solution);
+            solution->setFitness(fitness);
             evaluations++;
+
+            // TODO: Prfect solution found (finish breaking)
+            if (fitness == 0) {
+                LogHelper::logMessage("Perfect solution found in generation " + std::to_string(generations) + " with " + std::to_string(evaluations) + " evaluations.");
+                break;
+            }
         }
 
         // Reproduction
         std::vector<Solution *> newSolutions;
-        for (size_t i = 0; i < problem->getPopulationSize(); i++) {
+
+        while (newSolutions.size() < problem->getPopulationSize()) {
             // Select parents
-            Solution* parent1 = solutions[rand() % solutions.size()];
-            Solution* parent2 = solutions[rand() % solutions.size()];
+            Solution* parent1 = problem->getSelection()->select(solutions);
+            Solution* parent2 = problem->getSelection()->select(solutions);
 
-            // TODO: Crossover (maby make more than one child)
-            Solution* child = problem->getCrossover()->crossover(parent1, parent2);
+            std::vector<Solution*> children = problem->getCrossover()->crossover(parent1, parent2);
+            for (Solution* child : children) {
+                // TODO: Mutate
+                // child->mutate();
 
-            // TODO: Mutate
-            // child->mutate();
-
-            // TODO: Add the child to the new solutions
-            newSolutions.push_back(child);
+                if (newSolutions.size() < problem->getPopulationSize()) {
+                    newSolutions.push_back(child);
+                }
+            }
         }
+
+        // Replace the old solutions with the new ones
+        for (auto& solution : solutions) {
+            delete solution;
+        }
+        solutions = newSolutions;
+
         generations++;
     }
+
+    // Evaluate the last generation
+    for (auto& solution : solutions) {
+        double fitness = problem->evaluate(solution);
+        solution->setFitness(fitness);
+        evaluations++;
+    }
+
+    // Find the best solution
+    Solution* bestSolution = findBestSolution(solutions);
+    LogHelper::logMessage("Best solution: " + std::to_string(bestSolution->getFitness()));
+
+    // Print out solution
+    LogHelper::logMessage(bestSolution->getRoot()->toString());
+
 
     // Clean up dynamic memory
     for (auto& solution : solutions) {
@@ -86,4 +117,19 @@ void Task::run() {
 
     // throw std::runtime_error("Task::run() not implemented.");
 
+}
+
+Solution * Task::findBestSolution(const std::vector<Solution *> &solutions) {
+    if (solutions.empty()) {
+        return nullptr;
+    }
+
+    Solution* bestSolution = solutions[0];
+    for (size_t i = 1; i < solutions.size(); i++) {
+        if (solutions[i]->getFitness() < bestSolution->getFitness()) {
+            bestSolution = solutions[i];
+        }
+    }
+
+    return bestSolution;
 }

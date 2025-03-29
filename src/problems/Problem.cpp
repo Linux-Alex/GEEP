@@ -11,7 +11,8 @@
 std::atomic<size_t> Problem::ID_COUNTER = 0; // Initialize static member
 
 Problem::Problem(std::string name) : id(Problem::ID_COUNTER++), name(std::move(name)) {
-    shortName = std::to_string(Problem::ID_COUNTER);
+    this->shortName = std::to_string(Problem::ID_COUNTER);
+    this->elitism = 0;
 }
 
 Problem::Problem(std::string name, StopCriterion stopCrit, size_t dimensions, const std::vector<double> &upperLimits,
@@ -19,6 +20,7 @@ Problem::Problem(std::string name, StopCriterion stopCrit, size_t dimensions, co
     Problem(std::move(name));
     this->stopCrit = stopCrit;
     this->objectiveType = objectiveType;
+    this->elitism = 0;
 }
 
 Problem::Problem(std::string name, std::string shortName, std::string description, StopCriterion stopCrit,
@@ -27,6 +29,7 @@ Problem::Problem(std::string name, std::string shortName, std::string descriptio
     Problem give_me_a_name(std::move(name), stopCrit, dimensions, upperLimits, lowerLimits, objectiveType);
     this->shortName = std::move(shortName);
     this->description = std::move(description);
+    this->elitism = 0;
 }
 
 Solution Problem::generateRandomSolution(size_t maxDepth, size_t maxNodes) {

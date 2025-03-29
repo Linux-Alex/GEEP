@@ -42,6 +42,11 @@ public:
         Problem::setPopulationSize(populationSize);
         return *this;
     }
+
+    SymbolicRegressionProblem& setElitism(size_t elitism) {
+        Problem::setElitism(elitism);
+        return *this;
+    }
 };
 
 

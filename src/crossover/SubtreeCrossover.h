@@ -10,7 +10,7 @@
 class SubtreeCrossover : public Crossover {
 public:
     // Perform crossover
-    Solution* crossover(Solution* parent1, Solution* parent2) override;
+    std::vector<Solution*> crossover(Solution* parent1, Solution* parent2) override;
 };
 
 

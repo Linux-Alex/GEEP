@@ -13,7 +13,7 @@ Solution* TournamentSelection::select(const std::vector<Solution *> &population)
         size_t index = rand() % population.size();
 
         Solution* candidate = population[index];
-        if (!best || candidate->getFitness() > best->getFitness()) {
+        if (!best || candidate->getFitness() < best->getFitness()) {
             best = candidate;
         }
     }

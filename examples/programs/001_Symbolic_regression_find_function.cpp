@@ -28,7 +28,8 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
 
     // Create a new problem
     SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find function by target data")
-        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1000))
+        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 10000))
+        .setElitism(5)
         .setSelection(new TournamentSelection(3))
         .setCrossover(new SubtreeCrossover())
         .setPopulationSize(100);
