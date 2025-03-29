@@ -6,13 +6,19 @@
 
 #include <stdexcept>
 
-AddOperator::AddOperator(Node *parent) : FunctionNode("+") {
-    this->parent = parent;
+AddOperator::AddOperator(): FunctionNode("+") {
+    size_t lowerLimit = 2, upperLimit = 2;
+    setLimits(&lowerLimit, &upperLimit);
 }
 
-AddOperator::AddOperator(Node *parent, const std::vector<Node *> &children) : FunctionNode("+") {
-    this->parent = parent;
-    this->children = children;
+Node * AddOperator::clone() const {
+    auto clonedNode = new AddOperator();
+
+    for (const auto& child: children) {
+        clonedNode->addChild(child->clone());
+    }
+
+    return clonedNode;
 }
 
 double AddOperator::evaluate(const std::map<std::string, double> &variables) const {
