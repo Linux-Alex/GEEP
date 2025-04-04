@@ -23,7 +23,7 @@
  */
 
 REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
-    LogHelper::logMessage("Running symbolic regression program...");
+    // LogHelper::logMessage("Running symbolic regression program...");
 
     // Create a new task
     Task symbolicRegressionTask("Symbolic regression");
@@ -62,8 +62,11 @@ REGISTER_PROGRAM(001_Symbolic_regression_find_function) {
     symbolicRegressionTask.setProblem(&problem);
 
     try {
-        // Run the program
-        symbolicRegressionTask.run();
+        // Run the task on CPU
+        symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::CPU).run();
+
+        // Run the task on GPU
+        symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::GPU).run();
     } catch (std::exception &e) {
         LogHelper::logMessage("Error running symbolic regression program: " + std::string(e.what()), true);
         return;

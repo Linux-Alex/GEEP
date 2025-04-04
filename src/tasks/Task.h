@@ -10,6 +10,11 @@
 
 
 class Task {
+public:
+    enum class ExecutionMode {
+        CPU,
+        GPU,
+    };
 protected:
     size_t id;
 
@@ -18,7 +23,8 @@ protected:
 
     GEEPConfig* config;
 
-private:
+    ExecutionMode executionMode = ExecutionMode::GPU;
+
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
 
@@ -36,11 +42,16 @@ public:
     Solution* getSolution() const { return solution; }
 
     // Setters
-    void setProblem(Problem* problem) { this->problem = problem; }
-    void setSolution(Solution* solution) { this->solution = solution; }
+    Task& setProblem(Problem* problem) { this->problem = problem; return *this; }
+    Task& setSolution(Solution* solution) { this->solution = solution; return *this; }
+    Task& setExecutionMode(ExecutionMode mode) { executionMode = mode; return *this; }
 
     // Run the task
     void run();
+
+    // Specific implementations
+    void runOnCPU();
+    void runOnGPU();
 
     // Find best solution
     Solution* findBestSolution(const std::vector<Solution*>& solutions);

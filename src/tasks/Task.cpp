@@ -17,12 +17,20 @@ Task::Task(const std::string &name, Problem *problem, Solution *solution, GEEPCo
 Task::~Task() {
     // Delete the solution
     delete solution;
-
-    //
 }
 
 void Task::run() {
-    LogHelper::logMessage("Starting task " + std::to_string(id) + " with problem " + problem->getName() + "...");
+    if (executionMode == ExecutionMode::CPU) {
+        runOnCPU();
+    } else if (executionMode == ExecutionMode::GPU) {
+        runOnGPU();
+    } else {
+        throw std::runtime_error("Unknown execution mode.");
+    }
+}
+
+void Task::runOnCPU() {
+    LogHelper::logMessage("Starting task " + std::to_string(id) + " with problem " + problem->getName() + " (task running on CPU).");
 
     // Start timer
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -140,9 +148,23 @@ void Task::run() {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
     LogHelper::logMessage("Task " + std::to_string(id) + " finished in " + std::to_string(duration) + " ms.");
+}
 
-    // throw std::runtime_error("Task::run() not implemented.");
+void Task::runOnGPU() {
+    LogHelper::logMessage("Starting task " + std::to_string(id) + " with problem " + problem->getName() + " (task running on GPU).");
 
+    // Start timer
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+
+
+    throw std::runtime_error("GPU execution not implemented yet.");
+
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
+    LogHelper::logMessage("Task " + std::to_string(id) + " finished in " + std::to_string(duration) + " ms.");
 }
 
 Solution * Task::findBestSolution(const std::vector<Solution *> &solutions) {
