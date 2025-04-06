@@ -34,3 +34,4 @@ double SymbolicRegressionProblem::evaluate(Solution *solution) {
 }
 
 void SymbolicRegressionProblem::setTargets(const std::vector<Target> &targets) { this->targets = targets; }
+

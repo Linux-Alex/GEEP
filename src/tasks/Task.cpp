@@ -5,8 +5,12 @@
 #include "Task.h"
 #include <iostream>
 #include <chrono>
+#include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
 
 #include "../../examples/LogHelper.h"
+#include "../cuda/GPUTree.h"
+#include "../problems/SymbolicRegressionProblem.h"
 
 std::atomic<size_t> Task::ID_COUNTER = 0; // Initialize static member
 
@@ -156,7 +160,35 @@ void Task::runOnGPU() {
     // Start timer
     auto startTime = std::chrono::high_resolution_clock::now();
 
+    // Prepare target data for GPU
+    dynamic_cast<SymbolicRegressionProblem*>(problem)->prepareTargetData();
 
+    // Temporary solutions
+    std::vector<Solution *> solutions;
+
+    // Initialize GPU structures
+    GPUTree gpu_trees;
+    gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
+
+    // Convert population
+    for (size_t i = 0; i < problem->getPopulationSize(); i++) {
+        Solution* solution = new Solution(problem->generateRandomSolution(problem->getMaxDepth(), problem->getMaxNodes()));
+        solutions.push_back(solution);
+        gpu_trees.addSolution(i, solution);
+    }
+
+    // Allocate fitness array
+    float* gpu_fitness;
+    cudaMallocManaged(&gpu_fitness, solutions.size() * sizeof(float));
+
+    // Perform GPU evaluation
+    dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
+
+    // TODO: Rest of the operations
+
+    // Cleanup
+    gpu_trees.free();
+    cudaFree(gpu_fitness);
 
     throw std::runtime_error("GPU execution not implemented yet.");
 

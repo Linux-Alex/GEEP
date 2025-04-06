@@ -6,18 +6,30 @@
 #define SYMBOLICREGRESSIONPROBLEM_H
 
 #include "Problem.h"
+#include "../cuda/GPUTree.h"
 #include "../targets/Target.h"
+#include <set>
 
 
 class SymbolicRegressionProblem : public Problem {
 private:
+    // Targets for CPU
     std::vector<Target> targets;
+
+    // Targets for GPU
+    std::vector<float> flattened_targets;
+    std::vector<float> target_values;
+    size_t num_variables; // Number of unique variables
+
 public:
     // Inherit constructors
     using Problem::Problem;
 
-    // Evaluate the solution
+    // Evaluate the solution with CPU
     double evaluate(Solution *solution) override;
+
+    // Evaluate the solution with GPU
+    void gpuEvaluate(GPUTree& trees, float* fitnesses);
 
     // Set targets
     void setTargets(const std::vector<Target> &targets);
@@ -57,6 +69,22 @@ public:
         Problem::setMaxNodes(maxNodes);
         return *this;
     }
+
+    // Prepare targets for GPU
+    void prepareTargetData();
+
+    // Returns pointer to GPU-ready target data
+    float* getTargetData() const { return const_cast<float*>(flattened_targets.data()); }
+
+    // Returns pointer to target values
+    float* getTargetValues() const { return const_cast<float*>(target_values.data()); }
+
+    // Returns number of targets
+    size_t getNumTargets() const { return targets.size(); }
+
+    // Returns number of variables
+    size_t getNumVariables() const { return num_variables; }
+
 };
 
 

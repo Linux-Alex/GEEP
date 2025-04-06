@@ -15,6 +15,7 @@ public:
         CPU,
         GPU,
     };
+
 protected:
     size_t id;
 
@@ -24,6 +25,7 @@ protected:
     GEEPConfig* config;
 
     ExecutionMode executionMode = ExecutionMode::GPU;
+    int selectedCudaDevice = 0;
 
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
@@ -45,6 +47,7 @@ public:
     Task& setProblem(Problem* problem) { this->problem = problem; return *this; }
     Task& setSolution(Solution* solution) { this->solution = solution; return *this; }
     Task& setExecutionMode(ExecutionMode mode) { executionMode = mode; return *this; }
+    Task& setCudaDevice(int device) { selectedCudaDevice = device; return *this; }
 
     // Run the task
     void run();

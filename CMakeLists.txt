@@ -38,6 +38,7 @@ add_executable(GEEP src/main.cpp
         examples/programs/002_Symbolic_regression.cpp
         src/problems/SymbolicRegressionProblem.cpp
         src/problems/SymbolicRegressionProblem.h
+        src/problems/SymbolicRegressionProblem.cu
         src/selections/SelectionMethod.h
         src/nodes/terminals/ConstNode.cpp
         src/nodes/terminals/ConstNode.h
@@ -71,6 +72,8 @@ add_executable(GEEP src/main.cpp
         src/nodes/functions/DivideOperator.h
         src/nodes/functions/SubtractOperator.cpp
         src/nodes/functions/SubtractOperator.h
+        src/cuda/GPUTree.h
+        src/cuda/GPUTree.cu
 )
 
 set_target_properties(GEEP PROPERTIES
