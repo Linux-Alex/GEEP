@@ -6,6 +6,7 @@
 #define GPUTREE_H
 
 #include <cuda_runtime.h>
+#include <stack>
 
 struct GPUTree {
     int* nodes;          // Node types (operators/terminals)
