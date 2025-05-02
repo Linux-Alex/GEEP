@@ -31,6 +31,9 @@ public:
     // Evaluate the solution with GPU
     void gpuEvaluate(GPUTree& trees, float* fitnesses);
 
+    // Test GPU computing
+    void testGPUComputing();
+
     // Set targets
     void setTargets(const std::vector<Target> &targets);
 
@@ -86,7 +89,6 @@ public:
     size_t getNumVariables() const { return num_variables; }
 
 };
-
 
 
 #endif //SYMBOLICREGRESSIONPROBLEM_H

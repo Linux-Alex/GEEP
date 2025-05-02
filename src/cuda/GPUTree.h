@@ -7,6 +7,7 @@
 
 #include <cuda_runtime.h>
 #include <stack>
+#include "../solutions/Solution.h"
 
 struct GPUTree {
     int* nodes;          // Node types (operators/terminals)
@@ -24,7 +25,7 @@ struct GPUTree {
     void free();
 
     // Convert CPU solution to GPU representation
-    void addSolution(int index, class Solution* solution);
+    void addSolution(int index, Solution* solution);
 };
 
 #endif //GPUTREE_H

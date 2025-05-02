@@ -52,6 +52,9 @@ public:
     // Run the task
     void run();
 
+    // Test GPU computing
+    void testGPUComputing();
+
     // Specific implementations
     void runOnCPU();
     void runOnGPU();

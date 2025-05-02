@@ -1,5 +1,8 @@
 #include "GPUTree.h"
 
+#include <iostream>
+
+#include "CudaUtils.h"
 #include "../solutions/Solution.h"
 #include "../nodes/Node.h"
 #include "../nodes/FunctionNode.h"
@@ -44,8 +47,12 @@ __host__ void GPUTree::addSolution(int index, Solution *solution) {
    std::stack<std::pair<Node*, int>> node_stack;
    Node* root = solution->getRoot();
 
-   if (!root)
+   if (!root) {
+      std::cerr << "Error: Solution has no root node." << std::endl;
       return;
+   }
+
+   // std::cout << "Root node: " << root->toString() << std::endl;
 
    node_stack.push({root, -1}); // -1 indicates no parent
    int current_pos = 0;
@@ -80,14 +87,18 @@ __host__ void GPUTree::addSolution(int index, Solution *solution) {
          TerminalNode *tn = dynamic_cast<TerminalNode*>(node);
          if (dynamic_cast<VariableNode*>(tn)) {
             node_type = 0; // Variable node
+            node_value = 0.0f; // Explicitly set to 0 (value will come from target_data)
          }
          else if (dynamic_cast<ConstNode*>(tn)) {
             node_type = 1; // Constant node
-            node_value = tn->evaluate({});
+            node_value = tn->evaluate({}); // Evaluate constant value
          }
          else {
             throw std::runtime_error("Unknown terminal type");
          }
+      }
+      else {
+         throw std::runtime_error("Unknown node type");
       }
 
       nodes[offset + current_pos] = node_type;

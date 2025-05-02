@@ -8,6 +8,9 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+# For CUDA files
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_61 --ptxas-options=-v")
+
 # Find Qt
 set(CMAKE_PREFIX_PATH "/opt/Qt/6.8.2/gcc_64/lib/cmake")
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
@@ -74,6 +77,7 @@ add_executable(GEEP src/main.cpp
         src/nodes/functions/SubtractOperator.h
         src/cuda/GPUTree.h
         src/cuda/GPUTree.cu
+        examples/programs/003_Minimal_example_for_symbolic_regression.cpp
 )
 
 set_target_properties(GEEP PROPERTIES

@@ -17,6 +17,16 @@ __global__ void kernel() {
     printf("Hello from CUDA kernel!\n");
 }
 
+// extern "C" __device__ void cudaPrintf(const char* format, ...) {
+// #ifdef DEBUG_CUDA
+//     va_list args;
+//     va_start(args, format);
+//     vprintf(format, args);
+//     va_end(args);
+// #endif
+// }
+
+
 extern "C" void run_cuda_code() {
     kernel<<<1, 1>>>();
     cudaDeviceSynchronize();  // Ensure the kernel has finished executing

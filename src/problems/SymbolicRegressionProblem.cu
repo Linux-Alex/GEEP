@@ -1,77 +1,350 @@
 #include "SymbolicRegressionProblem.h"
 
-__device__ float evaluateTreeWithX(const int* nodes, const float* values, const int* children, size_t node_count, float x_value) {
-    // Stack-based evaluation for GPU efficiency
-    float stack[64]; // Adjust size based on your max tree depth
-    int stack_ptr = -1;
+#include <c++/13/cfloat>
 
-    for (size_t i = 0; i < node_count; i++) {
-        int node_type = nodes[i];
+__device__ float evaluateTreeWithX(const int* nodes, const float* values,
+                                 const int* children, size_t node_count,
+                                 float x_value) {
+    // Temporary storage for computed values
+    float temp_values[32];  // Adjust size based on max tree depth
+    bool computed[32] = {false};  // Track which nodes have been computed
 
-        if (node_type == 0) { // Variable node (assuming 0 = variable)
-            stack[++stack_ptr] = x_value;
-        }
-        else if (node_type == 1) { // Constant node (assuming 1 = constant)
-            stack[++stack_ptr] = values[i];
-        }
-        else { // Operator node
-            float right = stack[stack_ptr--];
-            float left = stack[stack_ptr--];
+    // Process nodes from last to first
+    for (int i = node_count - 1; i >= 0; i--) {
+        // Skip if already computed
+        if (computed[i]) continue;
 
-            switch (node_type) {
-                case 2: // Addition
-                    stack[++stack_ptr] = left + right;
+        // Check if this is a terminal node (no children)
+        if (children[i*2] == -1 && children[i*2+1] == -1) {
+            switch (nodes[i]) {
+                case 0:  // Variable node
+                    temp_values[i] = x_value;
                     break;
-                case 3: // Subtraction
-                    stack[++stack_ptr] = left - right;
-                    break;
-                case 4: // Multiplication
-                    stack[++stack_ptr] = left * right;
-                    break;
-                case 5: // Division
-                    stack[++stack_ptr] = right != 0 ? left / right : 0; // Avoid division by zero
+                case 1:  // Constant node
+                    temp_values[i] = values[i];
                     break;
                 default:
-                    stack[++stack_ptr] = 0; // Unknown operation, push 0
+                    temp_values[i] = NAN;  // Invalid terminal
+            }
+            computed[i] = true;
+        }
+        else {
+            // Check if children are computed
+            bool left_ready = (children[i*2] == -1) || computed[children[i*2]];
+            bool right_ready = (children[i*2+1] == -1) || computed[children[i*2+1]];
+
+            if (left_ready && right_ready) {
+                // Get left value (either from temp or original)
+                float left_val = (children[i*2] == -1) ?
+                    ((nodes[i*2] == 0) ? x_value : values[i*2]) :
+                    temp_values[children[i*2]];
+
+                // Get right value (either from temp or original)
+                float right_val = (children[i*2+1] == -1) ?
+                    ((nodes[i*2+1] == 0) ? x_value : values[i*2+1]) :
+                    temp_values[children[i*2+1]];
+
+                // Compute operation
+                switch (nodes[i]) {
+                    case 2:  // Add
+                        temp_values[i] = left_val + right_val;
+                        break;
+                    case 3:  // Subtract
+                        temp_values[i] = left_val - right_val;
+                        break;
+                    case 4:  // Multiply
+                        temp_values[i] = left_val * right_val;
+                        break;
+                    case 5:  // Divide
+                        temp_values[i] = (right_val != 0.0f) ?
+                                         left_val / right_val : FLT_MAX;
+                        break;
+                    default:
+                        temp_values[i] = NAN;  // Invalid operator
+                }
+                computed[i] = true;
             }
         }
     }
 
-    return stack[0]; // Final result
+    return temp_values[0];  // Root node value
 }
 
-__device__ float evaluateSingleTree(const int* nodes, const float* values, const int* children, size_t node_count, const float* target_data, const float* target_values, size_t num_targets) {
-    // TODO: GPU implementation of tree evaluation
+__device__ float evaluateSingleTree(const int* nodes, const float* values, const int* children,
+                                  size_t node_count, const float* target_data,
+                                  const float* target_values, size_t num_targets) {
+    // Get thread index for debug prints
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
     float total_error = 0.0f;
+
+    // Only print from first thread in first block to avoid clutter
+    if (idx == 0) {
+        printf("\n[GPU DEBUG] Evaluating tree with %zu nodes\n", node_count);
+        printf("Node types: ");
+        for (size_t i = 0; i < node_count; i++) printf("%d ", nodes[i]);
+        printf("\nNode values: ");
+        for (size_t i = 0; i < node_count; i++) printf("%.2f ", values[i]);
+        printf("\n");
+    }
+
     for (size_t i = 0; i < num_targets; i++) {
-        float x = target_data[i]; // Get input value for target i
+        float x = target_data[i];
         float predicted = evaluateTreeWithX(nodes, values, children, node_count, x);
         float expected = target_values[i];
-        total_error += (predicted - expected) * (predicted - expected);
+        float error = predicted - expected;
+        // total_error += error * error;
+        total_error += abs(predicted);
+
+        // Debug print from first thread
+        if (idx == 0) {
+            printf("  Target %zu: x=%.2f => pred=%.2f (expected=%.2f), err²=%.2f\n",
+                  i, x, predicted, expected, error*error);
+        }
     }
 
-    return total_error;
+    float mse = total_error / num_targets;
+
+    if (idx == 0) {
+        printf("  Final MSE: %.2f\n", mse);
+        // Print first few elements of target data for verification
+        printf("Sample target data: [%.2f, %.2f,...]\n",
+              target_data[0], target_data[1]);
+    }
+
+    return mse;
 }
 
-__global__ void gpuEvaluateKernel(const int* nodes, const float* values, const int* children, const size_t* counts, float* fitnesses, const float* target_data, const float* target_values, size_t num_targets, size_t population, int max_nodes_per_tree) {
+__global__ void gpuEvaluateKernel(
+    const int* nodes, const float* values, const int* children,
+    const size_t* counts, float* fitnesses,
+    const float* target_data, const float* target_values,
+    size_t num_targets, size_t population, int max_nodes)
+{
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < population) {
-        int offset = idx * max_nodes_per_tree;
-        fitnesses[idx] = evaluateSingleTree(&nodes[offset], &values[offset], &children[offset * 2], counts[idx], target_data, target_values, num_targets);
+    if (idx >= population) return;
+
+    int offset = idx * max_nodes;
+    size_t node_count = counts[idx];
+
+    // Simple validation
+    if (node_count == 0) {
+        fitnesses[idx] = FLT_MAX;
+        return;
     }
+
+    // Print target_data content
+    if (idx == 0) {
+        printf("Target data: ");
+        for (size_t i = 0; i < num_targets; i++) {
+            printf("%.2f ", target_data[i]);
+        }
+        printf("\n");
+
+        printf("Target values: ");
+        for (size_t i = 0; i < num_targets; i++) {
+            printf("%.2f ", target_values[i]);
+        }
+        printf("\n");
+    }
+
+    float total_error = 0.0f;
+    for (size_t i = 0; i < num_targets; i++) {
+        float x = target_data[i];
+        // printf("X: %.2f\n", x);
+        float predicted = evaluateTreeWithX(
+            nodes + offset,
+            values + offset,
+            children + (offset * 2),
+            node_count,
+            x);
+        // Print debug info
+        // printf("X: %.2f (after evaluateTreeWithX)\n", x);
+        printf("Target : x=%.2f => pred=%.2f (expected=%.2f)\n",
+        x, predicted, target_values[i]);
+        float error = predicted - target_values[i];
+        total_error += error * error;
+        printf("Error: %.2f\n", error);
+        // total_error += abs(predicted);
+    }
+
+    fitnesses[idx] = total_error / num_targets;
 }
 
 void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
+    printf("\n=== Starting GPU Evaluation ===\n");
+
+    // 1. Validate inputs
+    if (!trees.nodes || !trees.values || !trees.children || !trees.node_counts) {
+        printf("ERROR: GPUTree pointers not initialized!\n");
+        return;
+    }
+
+    if (!this->getTargetData() || !this->getTargetValues()) {
+        printf("ERROR: Target data not prepared! Call prepareTargetData() first.\n");
+        return;
+    }
+
+    // 2. Print debug info
+    printf("Population size: %zu\n", trees.population);
+    printf("Max nodes per tree: %d\n", this->getMaxNodes());
+    printf("Number of targets: %zu\n", this->getNumTargets());
+
+    // 3. Configure kernel launch
     dim3 block(256);
     dim3 grid((trees.population + block.x - 1) / block.x);
+    printf("Launching kernel with %d blocks, %d threads\n", grid.x, block.x);
+
+    // 4. Enable GPU printf
+    cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1024 * 1024);
+
+    // 5. Create debug buffer
+    float* debug_output;
+    cudaMallocManaged(&debug_output, 5 * sizeof(float));
+
+    // 6. Launch kernel with error checking
+    printf("Launching kernel...\n");
+    // Launch kernel with correct number of parameters
+    gpuEvaluateKernel<<<grid, block>>>(
+        trees.nodes,
+        trees.values,
+        trees.children,
+        trees.node_counts,
+        fitnesses,
+        this->getTargetData(),
+        this->getTargetValues(),
+        this->getNumTargets(),
+        trees.population,
+        this->getMaxNodes());
+
+    // 7. Check for launch errors
+    cudaError_t launchErr = cudaGetLastError();
+    if (launchErr != cudaSuccess) {
+        printf("Kernel launch failed: %s\n", cudaGetErrorString(launchErr));
+        cudaFree(debug_output);
+        return;
+    }
+
+    // 8. Synchronize and check execution
+    cudaError_t syncErr = cudaDeviceSynchronize();
+    if (syncErr != cudaSuccess) {
+        printf("Kernel execution failed: %s\n", cudaGetErrorString(syncErr));
+
+        // Print debug info if available
+        printf("Debug output: ");
+        for (int i = 0; i < 5; i++) {
+            printf("%.2f ", debug_output[i]);
+        }
+        printf("\n");
+
+        cudaFree(debug_output);
+        return;
+    }
+
+    // 9. Print results
+    printf("Evaluation completed successfully.\n");
+    printf("Sample fitness values:\n");
+    for (size_t i = 0; i < min(5ul, trees.population); i++) {
+        printf("  Solution %zu: %.2f\n", i, fitnesses[i]);
+    }
+
+    // 10. Cleanup
+    cudaFree(debug_output);
+    printf("=== GPU Evaluation Complete ===\n\n");
+}
+
+void SymbolicRegressionProblem::testGPUComputing() {
+    printf("\n=== STARTING PROPER GPU VALIDATION TEST ===\n");
+
+    // 1. Test Configuration
+    const size_t num_targets = 2;
+    const size_t population = 3;
+    const int max_nodes = 16;
+
+    // 2. Test Targets (x=1.0->4.0, x=2.0->9.0)
+    float h_target_data[] = {1.0f, 2.0f};
+    float h_target_values[] = {4.0f, 9.0f};
+
+    // 3. Allocate Unified Memory for everything
+    float *d_target_data, *d_target_values;
+    int *d_nodes;
+    float *d_values;
+    int *d_children;
+    size_t *d_counts;
+    float *d_fitnesses;
+
+    cudaMallocManaged(&d_target_data, num_targets * sizeof(float));
+    cudaMallocManaged(&d_target_values, num_targets * sizeof(float));
+    cudaMallocManaged(&d_nodes, population * max_nodes * sizeof(int));
+    cudaMallocManaged(&d_values, population * max_nodes * sizeof(float));
+    cudaMallocManaged(&d_children, population * max_nodes * 2 * sizeof(int));
+    cudaMallocManaged(&d_counts, population * sizeof(size_t));
+    cudaMallocManaged(&d_fitnesses, population * sizeof(float));
+
+    // 4. Initialize Test Solutions
+    // Solution 0: x + 2
+    int tree0_nodes[] = {2, 0, 1}; // Add, Var, Const
+    float tree0_values[] = {0, 0, 2};
+    int tree0_children[] = {1, 2, -1, -1, -1, -1}; // 2 children per node
+
+    // Solution 1: x
+    int tree1_nodes[] = {0}; // Just variable
+    float tree1_values[] = {0};
+    int tree1_children[] = {-1, -1};
+
+    // Solution 2: 5 (constant)
+    int tree2_nodes[] = {1}; // Just constant
+    float tree2_values[] = {5};
+    int tree2_children[] = {-1, -1};
+
+    // Copy to unified memory
+    // Solution 0
+    memcpy(&d_nodes[0*max_nodes], tree0_nodes, sizeof(tree0_nodes));
+    memcpy(&d_values[0*max_nodes], tree0_values, sizeof(tree0_values));
+    memcpy(&d_children[0*max_nodes*2], tree0_children, sizeof(tree0_children));
+    d_counts[0] = 3;
+
+    // Solution 1
+    memcpy(&d_nodes[1*max_nodes], tree1_nodes, sizeof(tree1_nodes));
+    memcpy(&d_values[1*max_nodes], tree1_values, sizeof(tree1_values));
+    memcpy(&d_children[1*max_nodes*2], tree1_children, sizeof(tree1_children));
+    d_counts[1] = 1;
+
+    // Solution 2
+    memcpy(&d_nodes[2*max_nodes], tree2_nodes, sizeof(tree2_nodes));
+    memcpy(&d_values[2*max_nodes], tree2_values, sizeof(tree2_values));
+    memcpy(&d_children[2*max_nodes*2], tree2_children, sizeof(tree2_children));
+    d_counts[2] = 1;
+
+    // Copy target data
+    memcpy(d_target_data, h_target_data, sizeof(h_target_data));
+    memcpy(d_target_values, h_target_values, sizeof(h_target_values));
+
+    // 5. Launch Kernel
+    dim3 block(256);
+    dim3 grid((population + block.x - 1) / block.x);
 
     gpuEvaluateKernel<<<grid, block>>>(
-        trees.nodes, trees.values, trees.children, trees.node_counts,
-        fitnesses,
-        this->getTargetData(), this->getTargetValues(), this->getNumTargets(),
-        trees.population, this->getMaxNodes());
+        d_nodes, d_values, d_children, d_counts, d_fitnesses,
+        d_target_data, d_target_values, num_targets,
+        population, max_nodes);
 
     cudaDeviceSynchronize();
+
+    // 6. Print Results
+    printf("\nValidation Results:\n");
+    printf("Solution 0 (x + 2): MSE = %.2f (expected 13.00)\n", d_fitnesses[0]);
+    printf("Solution 1 (x):     MSE = %.2f (expected 17.00)\n", d_fitnesses[1]);
+    printf("Solution 2 (5):     MSE = %.2f (expected 32.50)\n", d_fitnesses[2]);
+
+    // 7. Cleanup
+    cudaFree(d_target_data);
+    cudaFree(d_target_values);
+    cudaFree(d_nodes);
+    cudaFree(d_values);
+    cudaFree(d_children);
+    cudaFree(d_counts);
+    cudaFree(d_fitnesses);
 }
 
 void SymbolicRegressionProblem::prepareTargetData() {
@@ -100,7 +373,7 @@ void SymbolicRegressionProblem::prepareTargetData() {
         // Initialize all variables to 0
         std::vector<float> vars(num_variables, 0.0f);
 
-        // Set values for variables present in this target
+        // Set values for variables present in this targetmake
         for (const auto& [var_name, value] : target.getState()) {
             vars[var_indices[var_name]] = static_cast<float>(value);
         }
@@ -109,4 +382,15 @@ void SymbolicRegressionProblem::prepareTargetData() {
         flattened_targets.insert(flattened_targets.end(), vars.begin(), vars.end());
         target_values.push_back(static_cast<float>(target.getTargetValue()));
     }
+
+    // Debug: Print flattened targets
+    printf("Flattened targets (x values): ");
+    for (float x : flattened_targets) {
+        printf("%.2f ", x);
+    }
+    printf("\nTarget values (y expected): ");
+    for (float y : target_values) {
+        printf("%.2f ", y);
+    }
+    printf("\n");
 }

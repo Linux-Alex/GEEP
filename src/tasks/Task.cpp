@@ -33,6 +33,19 @@ void Task::run() {
     }
 }
 
+void Task::testGPUComputing() {
+    // Run testGPUComputing on problem as SymbolicRegressionProblem
+    try {
+        dynamic_cast<SymbolicRegressionProblem*>(problem)->testGPUComputing();
+    }
+    catch (const std::bad_cast& e) {
+        LogHelper::logMessage("Error: Problem is not a SymbolicRegressionProblem.", true);
+    }
+    catch (const std::exception& e) {
+        LogHelper::logMessage("Error: " + std::string(e.what()), true);
+    }
+}
+
 void Task::runOnCPU() {
     LogHelper::logMessage("Starting task " + std::to_string(id) + " with problem " + problem->getName() + " (task running on CPU).");
 
@@ -160,38 +173,109 @@ void Task::runOnGPU() {
     // Start timer
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    // Prepare target data for GPU
-    dynamic_cast<SymbolicRegressionProblem*>(problem)->prepareTargetData();
-
-    // Temporary solutions
-    std::vector<Solution *> solutions;
-
     // Initialize GPU structures
     GPUTree gpu_trees;
     gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
-    // Convert population
+    // Allocate fitness array
+    float* gpu_fitness;
+    cudaMallocManaged(&gpu_fitness, problem->getPopulationSize() * sizeof(float));
+
+    // Prepare initial population
+    std::vector<Solution *> solutions; // Use vector for easier management (deleting)
     for (size_t i = 0; i < problem->getPopulationSize(); i++) {
         Solution* solution = new Solution(problem->generateRandomSolution(problem->getMaxDepth(), problem->getMaxNodes()));
         solutions.push_back(solution);
         gpu_trees.addSolution(i, solution);
     }
 
-    // Allocate fitness array
-    float* gpu_fitness;
-    cudaMallocManaged(&gpu_fitness, solutions.size() * sizeof(float));
+    // Prepare target data
+    dynamic_cast<SymbolicRegressionProblem*>(problem)->prepareTargetData();
 
-    // Perform GPU evaluation
+    // Main evolution loop
+    size_t evaluations = 0;
+    size_t generations = 0;
+
+    while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
+        // GPU evaluation
+        dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
+        evaluations += problem->getPopulationSize();
+
+        // Update CPU fitness values
+        for (size_t i = 0; i < solutions.size(); i++) {
+            solutions[i]->setFitness(gpu_fitness[i]);
+            if (gpu_fitness[i] == 0.0f) {
+                LogHelper::logMessage("Prfect solution found in generation " + std::to_string(generations));
+                break;
+            }
+        }
+
+        // Selection (on CPU)
+        std::vector<Solution *> newSolutions;
+
+        // Elitism
+        if (problem->getElitism() > 0) {
+            std::sort(solutions.begin(), solutions.end(), [](Solution* a, Solution* b) {
+                return a->getFitness() < b->getFitness();
+            });
+
+            for (size_t i = 0; i < problem->getElitism(); i++) {
+                newSolutions.push_back(solutions[i]);
+            }
+        }
+
+        // GPU crossover and mutation
+        GPUTree new_gpu_trees;
+        new_gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
+
+        while (newSolutions.size() < problem->getPopulationSize()) {
+            // Selection on CPU
+            Solution* parent1 = problem->getSelection()->select(solutions);
+            Solution* parent2 = problem->getSelection()->select(solutions);
+
+            // Crossover on GPU
+            int parent1_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent1));
+            int parent2_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent2));
+
+            // TODO: Implement GPU crossover kernel call
+            // gpuCrossover(gpu_trees, new_gpu_trees, parent1_idx, parent2_idx, newSolutions_idx);
+
+            // For now fall back to CPU crossover
+            std::vector<Solution *> children = problem->getCrossover()->crossover(parent1, parent2);
+
+            for (Solution* child : children) {
+                if (newSolutions.size() < problem->getPopulationSize()) {
+                    newSolutions.push_back(child);
+                }
+            }
+        }
+
+        // Replace population
+        // Free old GPU memory
+        gpu_trees.free();
+
+        // Convert new solution to GPU format
+        for (size_t i = 0; i < newSolutions.size(); i++) {
+            gpu_trees.addSolution(i, newSolutions[i]);
+        }
+
+        generations++;
+    }
+
+    // Final evaluation and cleanup
     dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
 
-    // TODO: Rest of the operations
+    // Find best solution
+    Solution* bestSolution = findBestSolution(solutions);
+    LogHelper::logMessage("Best solution: " + std::to_string(bestSolution->getFitness()));
+    LogHelper::logMessage(bestSolution->getRoot()->toString());
 
     // Cleanup
     gpu_trees.free();
     cudaFree(gpu_fitness);
-
-    throw std::runtime_error("GPU execution not implemented yet.");
-
+    for (auto& solution : solutions) {
+        delete solution;
+    }
 
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();

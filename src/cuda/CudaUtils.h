@@ -12,7 +12,7 @@ extern "C" {
     // Function to check for CUDA support
     bool hasCudaSupport(bool verbose = true);
 
-
+    // void cudaPrintf(const char* format, ...);
 
 #ifdef __cplusplus
 }
