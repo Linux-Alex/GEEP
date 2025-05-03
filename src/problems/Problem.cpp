@@ -38,6 +38,9 @@ Problem::Problem(std::string name, std::string shortName, std::string descriptio
     this->maxNodes = 0;
 }
 
+Problem::~Problem() {
+}
+
 bool Problem::isInBounds(Solution *solution) {
     if (solution->getRoot() == nullptr) {
         return false;

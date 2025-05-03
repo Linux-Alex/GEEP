@@ -11,6 +11,18 @@
 #include <set>
 
 
+// Evaluation kernel
+__global__ void gpuEvaluateKernel(
+    const int* nodes, const float* values,
+    const int* children, const size_t* counts,
+    float* fitnesses,
+    const float* target_data, const float* target_values,
+    size_t num_targets, size_t population, int max_nodes);
+
+// Evaluate tree with X
+__device__ float evaluateTreeWithX(const int* nodes, const float* values,
+                                   const int* children, size_t index, float x);
+
 class SymbolicRegressionProblem : public Problem {
 private:
     // Targets for CPU
@@ -25,6 +37,9 @@ public:
     // Inherit constructors
     using Problem::Problem;
 
+    // Destructor
+    ~SymbolicRegressionProblem() override;
+
     // Evaluate the solution with CPU
     double evaluate(Solution *solution) override;
 
@@ -32,7 +47,7 @@ public:
     void gpuEvaluate(GPUTree& trees, float* fitnesses);
 
     // Test GPU computing
-    void testGPUComputing();
+    static void testGPUComputing();
 
     // Set targets
     void setTargets(const std::vector<Target> &targets);

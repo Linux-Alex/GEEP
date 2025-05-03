@@ -40,7 +40,7 @@ add_executable(GEEP src/main.cpp
         examples/LogHelper.h
         examples/programs/002_Symbolic_regression.cpp
         src/problems/SymbolicRegressionProblem.cpp
-        src/problems/SymbolicRegressionProblem.h
+        src/problems/SymbolicRegressionProblem.cuh
         src/problems/SymbolicRegressionProblem.cu
         src/selections/SelectionMethod.h
         src/nodes/terminals/ConstNode.cpp
@@ -83,10 +83,91 @@ add_executable(GEEP src/main.cpp
 set_target_properties(GEEP PROPERTIES
                       CUDA_SEPARABLE_COMPILATION ON)
 
+# Google Test Integration
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
+)
+
+# Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# Enable CUDA separable compilation
+enable_testing()
+
+# Test executable
+add_executable(GEEPTests src/tests/main_test.cpp
+        src/tests/SymbolicRegressionGPUTest.cu
+        src/tests/SymbolicRegressionGPUTest.h
+        src/problems/SymbolicRegressionProblem.cuh
+        src/problems/SymbolicRegressionProblem.cu
+        src/problems/SymbolicRegressionProblem.cpp
+        src/problems/Problem.h
+        src/problems/Problem.cpp
+        src/solutions/Solution.h
+        src/solutions/Solution.cpp
+        src/nodes/Node.h
+        src/nodes/Node.cpp
+        src/nodes/FunctionNode.h
+        src/nodes/FunctionNode.cpp
+        src/nodes/terminals/ConstNode.h
+        src/nodes/terminals/ConstNode.cpp
+        src/nodes/TerminalNode.h
+        src/nodes/TerminalNode.cpp
+        src/nodes/terminals/VariableNode.h
+        src/nodes/terminals/VariableNode.cpp
+        src/nodes/functions/AddOperator.h
+        src/nodes/functions/AddOperator.cpp
+        src/nodes/functions/MultiplyOperator.h
+        src/nodes/functions/MultiplyOperator.cpp
+        src/nodes/functions/DivideOperator.h
+        src/nodes/functions/DivideOperator.cpp
+        src/nodes/functions/SubtractOperator.h
+        src/nodes/functions/SubtractOperator.cpp
+        src/criterions/StopCriterionType.h
+        src/criterions/StopCriterion.h
+        src/criterions/StopCriterion.cpp
+        src/targets/Target.h
+        src/targets/Target.cpp
+        src/cuda/CudaUtils.h
+        src/cuda/CudaUtils.cu
+        src/cuda/GPUTree.h
+        src/cuda/GPUTree.cu
+        src/selections/SelectionMethod.h
+        src/selections/Selection.h
+        src/selections/Selection.cpp
+        src/selections/TournamentSelection.h
+        src/selections/TournamentSelection.cpp
+        src/helpers/NumberConversions.h
+        src/helpers/NumberConversions.cpp
+
+)
+
+# Link GoogleTest and your app code as needed
+target_link_libraries(GEEPTests
+        PRIVATE
+        GTest::gtest
+        GTest::gtest_main
+        pthread
+)
+
+# Include directories for GTest and the project
+target_include_directories(GEEPTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Discover and run tests automatically
+include(GoogleTest)
+gtest_discover_tests(GEEPTests)
+
 # Link Qt
 target_link_libraries(GEEP PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(GEEPTests PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Widgets)
 
 # Include Qt directories
 target_include_directories(GEEP PRIVATE
+        ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
+)
+target_include_directories(GEEPTests PRIVATE
         ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )

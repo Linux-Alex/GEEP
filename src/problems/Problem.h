@@ -79,6 +79,9 @@ public:
     Problem(std::string name, std::string shortName, std::string description, StopCriterion stopCrit, size_t dimensions,
             const std::vector<double> &upperLimits, const std::vector<double> &lowerLimits, ObjectiveType objectiveType);
 
+    // Destructor
+    virtual ~Problem();
+
     // Getters
     size_t getId() const { return id; }
     const std::string& getName() const { return name; }

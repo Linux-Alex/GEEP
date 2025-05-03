@@ -10,7 +10,7 @@
 
 #include "../../examples/LogHelper.h"
 #include "../cuda/GPUTree.h"
-#include "../problems/SymbolicRegressionProblem.h"
+#include "../problems/SymbolicRegressionProblem.cuh"
 
 std::atomic<size_t> Task::ID_COUNTER = 0; // Initialize static member
 

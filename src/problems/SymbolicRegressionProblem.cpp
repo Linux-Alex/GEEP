@@ -2,8 +2,7 @@
 // Created by aleks on 2.3.2025.
 //
 
-#include "SymbolicRegressionProblem.h"
-
+#include "SymbolicRegressionProblem.cuh"
 #include <stdexcept>
 
 double SymbolicRegressionProblem::evaluate(Solution *solution) {

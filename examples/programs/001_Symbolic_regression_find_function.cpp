@@ -12,7 +12,7 @@
 #include "../../src/nodes/terminals/ConstNode.h"
 #include "../../src/nodes/functions/DivideOperator.h"
 #include "../../src/nodes/functions/SubtractOperator.h"
-#include "../../src/problems/SymbolicRegressionProblem.h"
+#include "../../src/problems/SymbolicRegressionProblem.cuh"
 #include "../../src/selections/TournamentSelection.h"
 #include "../../src/tasks/Task.h"
 #include "../../src/crossover/SubtreeCrossover.h"
