@@ -24,7 +24,7 @@ void GPUTree::allocate(size_t max_nodes, size_t population_size) {
    cudaMallocManaged(&values, max_nodes * population_size * sizeof(float));
    cudaMallocManaged(&children, max_nodes * 2 * population_size * sizeof(int));
    cudaMallocManaged(&parent_indices, max_nodes * population_size * sizeof(int));
-   cudaMallocManaged(&node_counts, max_nodes * population_size * sizeof(size_t));
+   cudaMallocManaged(&node_counts, population_size * sizeof(size_t));
 }
 
 void GPUTree::free() {
@@ -62,7 +62,7 @@ __host__ void GPUTree::addSolution(int index, Solution *solution) {
       node_stack.pop();
 
       // Store node information
-      int node_type;
+      int node_type = 0;
       float node_value = 0.0f;
 
       if (dynamic_cast<FunctionNode*>(node)) {

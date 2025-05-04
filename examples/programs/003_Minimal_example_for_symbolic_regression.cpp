@@ -29,13 +29,13 @@ REGISTER_PROGRAM(003_Minimal_example_for_symbolic_regression) {
 
     // Create a new problem
     SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find function by target data")
-        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 100))
-        .setElitism(5)
+        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1))
+        // .setElitism(5)
         .setSelection(new TournamentSelection(3))
         .setCrossover(new SubtreeCrossover())
         .setMaxDepth(5)
         .setMaxNodes(16)
-        .setPopulationSize(100);
+        .setPopulationSize(1);
 
     problem.setFunctionSet({
         []() { return new AddOperator(); },
@@ -59,13 +59,13 @@ REGISTER_PROGRAM(003_Minimal_example_for_symbolic_regression) {
 
     try {
         // Run the task on CPU
-        // symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::CPU).run();
+        symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::CPU).run();
 
         // Run the task on GPU
-        // symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::GPU).run();
+        symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::GPU).run();
 
         // Test GPU computing
-        symbolicRegressionTask.testGPUComputing();
+        // symbolicRegressionTask.testGPUComputing();
     } catch (std::exception &e) {
         LogHelper::logMessage("Error running symbolic regression program: " + std::string(e.what()), true);
         return;

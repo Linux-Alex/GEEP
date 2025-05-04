@@ -180,6 +180,7 @@ void Task::runOnGPU() {
     // Allocate fitness array
     float* gpu_fitness;
     cudaMallocManaged(&gpu_fitness, problem->getPopulationSize() * sizeof(float));
+    cudaMemset(gpu_fitness, -1, problem->getPopulationSize() * sizeof(float));
 
     // Prepare initial population
     std::vector<Solution *> solutions; // Use vector for easier management (deleting)
@@ -253,6 +254,7 @@ void Task::runOnGPU() {
         // Replace population
         // Free old GPU memory
         gpu_trees.free();
+        gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
         // Convert new solution to GPU format
         for (size_t i = 0; i < newSolutions.size(); i++) {
