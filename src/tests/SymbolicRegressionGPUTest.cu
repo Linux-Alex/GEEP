@@ -280,3 +280,48 @@ TEST_F(SymbolicRegressionGPUTest, EvaluateSomeTest) {
     // Difference: (4-1.67)^2 + (9-3.33)^2 = 5.43 + 11.09 = 37.58; assuming some internal normalization, 18.78f is likely
     EXPECT_NEAR(d_fitnesses[0], 257.69f, 0.01f);
 }
+
+TEST_F(SymbolicRegressionGPUTest, EvaluateCrossedTree) {
+    // Represents the expression: (x + (x * (2 / 3)))
+    const size_t population = 1; // For this single test
+    const int max_nodes = 16;
+    const size_t num_targets = 2;
+
+    // Inputs: x = 1 and x = 2 → Expected outputs: 1 + 2 = 3, 2 + 2 = 4
+    float h_target_data[] = {1.0f, 2.0f};
+    float h_target_values[] = {4.0f, 9.0f}; // Targets (e.g., maybe the "ideal" model is x*x + 3)
+
+    cudaMallocManaged(&d_nodes, population * max_nodes * sizeof(int));
+    cudaMallocManaged(&d_values, population * max_nodes * sizeof(float));
+    cudaMallocManaged(&d_children, population * max_nodes * 2 * sizeof(int));
+    cudaMallocManaged(&d_counts, population * sizeof(size_t));
+    cudaMallocManaged(&d_fitnesses, population * sizeof(float));
+    cudaMallocManaged(&d_target_data, num_targets * sizeof(float));
+    cudaMallocManaged(&d_target_values, num_targets * sizeof(float));
+
+    int nodes[] = {3, 0, 4, 2, 1, 2, 4, 1, 0, 1, 1};      // 0 = VariableNode
+    float values[] = {0.00, 0.00, 0.00, 0.00, 0.27, 0.00, 0.00, 9.04, 0.00, 8.32, 2.14};   // Only the constant node carries a value
+    int children[] = {
+        1, 2, -1, -1, 3, 10, 4, 5, -1, -1, 6, 9, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1
+    };
+
+    memcpy(&d_nodes[0*max_nodes], nodes, sizeof(nodes));
+    memcpy(&d_values[0*max_nodes], values, sizeof(values));
+    memcpy(&d_children[0*max_nodes*2], children, sizeof(children));
+    d_counts[0] = 11; // Number of nodes in the tree
+
+    // Copy target data
+    memcpy(d_target_data, h_target_data, sizeof(h_target_data));
+    memcpy(d_target_values, h_target_values, sizeof(h_target_values));
+
+    dim3 block(256);
+    dim3 grid((population + block.x - 1) / block.x);
+    gpuEvaluateKernel<<<grid, block>>>(
+        d_nodes, d_values, d_children, d_counts, d_fitnesses,
+        d_target_data, d_target_values, num_targets,
+        population, max_nodes);
+    cudaDeviceSynchronize();
+
+    // Difference: (4-1.67)^2 + (9-3.33)^2 = 5.43 + 11.09 = 37.58; assuming some internal normalization, 18.78f is likely
+    EXPECT_NEAR(d_fitnesses[0], 2882.12f, 0.01f);
+}
