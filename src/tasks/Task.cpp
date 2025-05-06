@@ -173,6 +173,9 @@ void Task::runOnGPU() {
     // Start timer
     auto startTime = std::chrono::high_resolution_clock::now();
 
+    //
+    cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1024 * 1024);
+
     // Initialize GPU structures
     GPUTree gpu_trees;
     gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
@@ -226,8 +229,8 @@ void Task::runOnGPU() {
         }
 
         // GPU crossover and mutation
-        GPUTree new_gpu_trees;
-        new_gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
+        // GPUTree new_gpu_trees;
+        // new_gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
         while (newSolutions.size() < problem->getPopulationSize()) {
             // Selection on CPU
@@ -235,8 +238,8 @@ void Task::runOnGPU() {
             Solution* parent2 = problem->getSelection()->select(solutions);
 
             // Crossover on GPU
-            int parent1_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent1));
-            int parent2_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent2));
+            // int parent1_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent1));
+            // int parent2_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent2));
 
             // TODO: Implement GPU crossover kernel call
             // gpuCrossover(gpu_trees, new_gpu_trees, parent1_idx, parent2_idx, newSolutions_idx);
@@ -255,6 +258,7 @@ void Task::runOnGPU() {
         // Free old GPU memory
         gpu_trees.free();
         gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
+
 
         // Convert new solution to GPU format
         for (size_t i = 0; i < newSolutions.size(); i++) {

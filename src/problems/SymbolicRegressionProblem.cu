@@ -4,10 +4,10 @@
 
 SymbolicRegressionProblem::~SymbolicRegressionProblem() {
     // Free GPU memory
-    if (flattened_targets.size() > 0) {
-        cudaFree(flattened_targets.data());
-        cudaFree(target_values.data());
-    }
+    // if (flattened_targets.size() > 0) {
+    //     cudaFree(flattened_targets.data());
+    //     cudaFree(target_values.data());
+    // }
 }
 
 __device__ float evaluateTreeWithX(const int* nodes, const float* values,
@@ -102,47 +102,47 @@ __global__ void gpuEvaluateKernel(
     }
 
     // Print target_data content
-    if (idx == 0) {
-        printf("Target data: ");
-        for (size_t i = 0; i < num_targets; i++) {
-            printf("%.2f ", target_data[i]);
-        }
-        printf("\n");
-
-        printf("Target values: ");
-        for (size_t i = 0; i < num_targets; i++) {
-            printf("%.2f ", target_values[i]);
-        }
-        printf("\n");
-    }
+    // if (idx == 0) {
+    //     printf("Target data: ");
+    //     for (size_t i = 0; i < num_targets; i++) {
+    //         printf("%.2f ", target_data[i]);
+    //     }
+    //     printf("\n");
+    //
+    //     printf("Target values: ");
+    //     for (size_t i = 0; i < num_targets; i++) {
+    //         printf("%.2f ", target_values[i]);
+    //     }
+    //     printf("\n");
+    // }
 
     // Print all arguments
-    printf("Offset: %d\n", offset);
-
-    printf("Nodes: ");
-    for (size_t i = 0; i < node_count; i++) {
-        printf("%d ", nodes[offset + i]);
-    }
-    printf("\nValues: ");
-    for (size_t i = 0; i < node_count; i++) {
-        printf("%.2f ", values[offset + i]);
-    }
-    printf("\nChildren: ");
-    for (size_t i = 0; i < node_count * 2; i++) {
-        printf("%d ", (int)children[offset * 2 + i]);
-    }
-    printf("\nCounts: ");
-    for (size_t i = 0; i < population; i++) {
-        printf("%d ", (int)counts[i]);
-    }
-    printf("\nFitnesses: %f\n", fitnesses[idx]);
-    printf("Population: %d\n", (int)population);
-    printf("Max nodes: %d\n", max_nodes);
-    printf("Thread ID: %d\n", idx);
-    printf("Block ID: %d\n", blockIdx.x);
-    printf("Block size: %d\n", blockDim.x);
-    printf("Grid size: %d\n", gridDim.x);
-    printf("Target data size: %d\n", (int)num_targets);
+    // printf("Offset: %d\n", offset);
+    //
+    // printf("Nodes: ");
+    // for (size_t i = 0; i < node_count; i++) {
+    //     printf("%d ", nodes[offset + i]);
+    // }
+    // printf("\nValues: ");
+    // for (size_t i = 0; i < node_count; i++) {
+    //     printf("%.2f ", values[offset + i]);
+    // }
+    // printf("\nChildren: ");
+    // for (size_t i = 0; i < node_count * 2; i++) {
+    //     printf("%d ", (int)children[offset * 2 + i]);
+    // }
+    // printf("\nCounts: ");
+    // for (size_t i = 0; i < population; i++) {
+    //     printf("%d ", (int)counts[i]);
+    // }
+    // printf("\nFitnesses: %f\n", fitnesses[idx]);
+    // printf("Population: %d\n", (int)population);
+    // printf("Max nodes: %d\n", max_nodes);
+    // printf("Thread ID: %d\n", idx);
+    // printf("Block ID: %d\n", blockIdx.x);
+    // printf("Block size: %d\n", blockDim.x);
+    // printf("Grid size: %d\n", gridDim.x);
+    // printf("Target data size: %d\n", (int)num_targets);
 
     float total_error = 0.0f;
     for (size_t i = 0; i < num_targets; i++) {
@@ -162,14 +162,14 @@ __global__ void gpuEvaluateKernel(
         // printf("Error: %.2f\n", error);
     }
 
-    printf("Total error for tree %d: %.2f\n", idx, total_error);
-    printf("Num targets: %d\n", (int)num_targets);
+    // printf("Total error for tree %d: %.2f\n", idx, total_error);
+    // printf("Num targets: %d\n", (int)num_targets);
     fitnesses[idx] = total_error / static_cast<float>(num_targets);
-    printf("Fitnesses: %f\n", fitnesses[idx]);
+    // printf("Fitnesses: %f\n", fitnesses[idx]);
 }
 
 void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
-    printf("\n=== Starting GPU Evaluation ===\n");
+    // printf("\n=== Starting GPU Evaluation ===\n");
 
     // 1. Validate inputs
     if (!trees.nodes || !trees.values || !trees.children || !trees.node_counts) {
@@ -188,52 +188,49 @@ void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
     // printf("Number of targets: %zu\n", this->getNumTargets());
 
 
-    printf("Target data: ");
-    for (size_t i = 0; i < this->getNumTargets(); i++) {
-        printf("%.2f ", this->getTargetData()[i]);
-    }
-    printf("\nTarget values: ");
-    for (size_t i = 0; i < this->getNumTargets(); i++) {
-        printf("%.2f ", this->getTargetValues()[i]);
-    }
-
-    printf("\nPopulation: %zu", trees.population);
-    printf("\nMax nodes: %zu", this->getMaxNodes());
-    printf("\nNumber of nodes in each tree:\n");
-    for (size_t i = 0; i < trees.population; i++) {
-        printf("%d ", trees.node_counts[i]);
-    }
-
-    for (size_t j = 0; j < trees.population; j++) {
-        printf("\nNodes: ");
-        for (size_t i = 0; i < trees.population * trees.node_counts[j]; i++) {
-            printf("%d ", trees.nodes[i]);
-        }
-
-        printf("\nValues: ");
-        for (size_t i = 0; i < trees.population * trees.node_counts[j]; i++) {
-            printf("%.2f ", trees.values[i]);
-        }
-        printf("\nChildren: ");
-        for (size_t i = 0; i < trees.population * trees.node_counts[j] * 2; i++) {
-            printf("%d ", trees.children[i]);
-        }
-    }
+    // printf("Target data: ");
+    // for (size_t i = 0; i < this->getNumTargets(); i++) {
+    //     printf("%.2f ", this->getTargetData()[i]);
+    // }
+    // printf("\nTarget values: ");
+    // for (size_t i = 0; i < this->getNumTargets(); i++) {
+    //     printf("%.2f ", this->getTargetValues()[i]);
+    // }
+    //
+    // printf("\nPopulation: %zu", trees.population);
+    // printf("\nMax nodes: %zu", this->getMaxNodes());
+    // printf("\nNumber of nodes in each tree:\n");
+    // for (size_t i = 0; i < trees.population; i++) {
+    //     printf("%d ", trees.node_counts[i]);
+    // }
+    //
+    // for (size_t j = 0; j < trees.population; j++) {
+    //     printf("\nNodes: ");
+    //     for (size_t i = 0; i < trees.population * trees.node_counts[j]; i++) {
+    //         printf("%d ", trees.nodes[i]);
+    //     }
+    //
+    //     printf("\nValues: ");
+    //     for (size_t i = 0; i < trees.population * trees.node_counts[j]; i++) {
+    //         printf("%.2f ", trees.values[i]);
+    //     }
+    //     printf("\nChildren: ");
+    //     for (size_t i = 0; i < trees.population * trees.node_counts[j] * 2; i++) {
+    //         printf("%d ", trees.children[i]);
+    //     }
+    // }
 
     // 3. Configure kernel launch
     dim3 block(256);
     dim3 grid((trees.population + block.x - 1) / block.x);
-    printf("\nLaunching kernel with %d blocks, %d threads\n", grid.x, block.x);
+    // printf("\nLaunching kernel with %d blocks, %d threads\n", grid.x, block.x);
 
     // 4. Enable GPU printf
-    cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1024 * 1024);
+    // cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1024 * 1024);
 
-    // 5. Create debug buffer
-    float* debug_output;
-    cudaMallocManaged(&debug_output, 5 * sizeof(float));
 
     // 6. Launch kernel with error checking
-    printf("Launching kernel...\n");
+    // printf("Launching kernel...\n");
     // Launch kernel with correct number of parameters
 
     float* targetData;
@@ -268,43 +265,35 @@ void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
     cudaError_t launchErr = cudaGetLastError();
     if (launchErr != cudaSuccess) {
         printf("Kernel launch failed: %s\n", cudaGetErrorString(launchErr));
-        cudaFree(debug_output);
         return;
     }
 
-    printf("Pre-sync-kernel children: %d %d %d %d\n",
-        trees.children[0], trees.children[1], trees.children[2], trees.children[3]);
+    // printf("Pre-sync-kernel children: %d %d %d %d\n",
+    //     trees.children[0], trees.children[1], trees.children[2], trees.children[3]);
 
     // 8. Synchronize and check execution
     cudaError_t syncErr = cudaDeviceSynchronize();
     if (syncErr != cudaSuccess) {
         printf("Kernel execution failed: %s\n", cudaGetErrorString(syncErr));
-
-        // Print debug info if available
-        printf("Debug output: ");
-        for (int i = 0; i < 5; i++) {
-            printf("%.2f ", debug_output[i]);
-        }
-        printf("\n");
-
-        cudaFree(debug_output);
         return;
     }
 
+    // Free target data
+    cudaFree(targetData);
+    cudaFree(targetValues);
 
-    printf("Post-kernel children: %d %d %d %d\n",
-        trees.children[0], trees.children[1], trees.children[2], trees.children[3]);
+    // printf("Post-kernel children: %d %d %d %d\n",
+    //     trees.children[0], trees.children[1], trees.children[2], trees.children[3]);
 
     // 9. Print results
-    printf("Evaluation completed successfully.\n");
-    printf("Sample fitness values:\n");
-    for (size_t i = 0; i < min(5ul, trees.population); i++) {
-        printf("  Solution %zu: %.2f\n", i, fitnesses[i]);
-    }
+    // printf("Evaluation completed successfully.\n");
+    // printf("Sample fitness values:\n");
+    // for (size_t i = 0; i < min(5ul, trees.population); i++) {
+    //     printf("  Solution %zu: %.2f\n", i, fitnesses[i]);
+    // }
 
     // 10. Cleanup
-    cudaFree(debug_output);
-    printf("=== GPU Evaluation Complete ===\n\n");
+    // printf("=== GPU Evaluation Complete ===\n\n");
 }
 
 void SymbolicRegressionProblem::testGPUComputing() {
@@ -480,13 +469,13 @@ void SymbolicRegressionProblem::prepareTargetData() {
     }
 
     // Debug: Print flattened targets
-    printf("Flattened targets (x values): ");
-    for (float x : flattened_targets) {
-        printf("%.2f ", x);
-    }
-    printf("\nTarget values (y expected): ");
-    for (float y : target_values) {
-        printf("%.2f ", y);
-    }
-    printf("\n");
+    // printf("Flattened targets (x values): ");
+    // for (float x : flattened_targets) {
+    //     printf("%.2f ", x);
+    // }
+    // printf("\nTarget values (y expected): ");
+    // for (float y : target_values) {
+    //     printf("%.2f ", y);
+    // }
+    // printf("\n");
 }
