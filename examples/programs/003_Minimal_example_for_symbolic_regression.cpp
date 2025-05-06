@@ -29,7 +29,7 @@ REGISTER_PROGRAM(003_Minimal_example_for_symbolic_regression) {
 
     // Create a new problem
     SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find function by target data")
-        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 100))
+        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 3))
         // .setElitism(5)
         .setSelection(new TournamentSelection(3))
         .setCrossover(new SubtreeCrossover())

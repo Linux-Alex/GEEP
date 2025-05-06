@@ -165,7 +165,7 @@ __global__ void gpuEvaluateKernel(
     // printf("Total error for tree %d: %.2f\n", idx, total_error);
     // printf("Num targets: %d\n", (int)num_targets);
     fitnesses[idx] = total_error / static_cast<float>(num_targets);
-    // printf("Fitnesses: %f\n", fitnesses[idx]);
+    // printf("Fitnesses: %f on idx: %d\n", fitnesses[idx], idx);
 }
 
 void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
@@ -241,13 +241,6 @@ void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
 
     memcpy(targetData, this->getTargetData(), this->getNumTargets() * sizeof(float));
     memcpy(targetValues, this->getTargetValues(), this->getNumTargets() * sizeof(float));
-
-    float *fitnesses1;
-    cudaMallocManaged(&fitnesses1, trees.population * sizeof(float));
-    // Set the fintesses1 to -1
-    for (size_t i = 0; i < trees.population; i++) {
-        fitnesses1[i] = 0.0f;
-    }
 
     gpuEvaluateKernel<<<grid, block>>>(
         trees.nodes,

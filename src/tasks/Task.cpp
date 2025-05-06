@@ -173,7 +173,7 @@ void Task::runOnGPU() {
     // Start timer
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    //
+    // Set CUDA device limit for printf
     cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1024 * 1024);
 
     // Initialize GPU structures
@@ -202,6 +202,7 @@ void Task::runOnGPU() {
 
     while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
         // GPU evaluation
+        cudaMemset(gpu_fitness, -1, problem->getPopulationSize() * sizeof(float));
         dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
         evaluations += problem->getPopulationSize();
 
@@ -256,20 +257,31 @@ void Task::runOnGPU() {
 
         // Replace population
         // Free old GPU memory
-        gpu_trees.free();
-        gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
-
+        // gpu_trees.free();
+        // gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
         // Convert new solution to GPU format
         for (size_t i = 0; i < newSolutions.size(); i++) {
             gpu_trees.addSolution(i, newSolutions[i]);
         }
 
+        solutions = newSolutions;
+
         generations++;
     }
 
     // Final evaluation and cleanup
     dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
+
+    // Update CPU fitness values
+    for (size_t i = 0; i < solutions.size(); i++) {
+        solutions[i]->setFitness(gpu_fitness[i]);
+    }
+
+    // Print fitness values
+    // for (size_t i = 0; i < solutions.size(); i++) {
+    //     LogHelper::logMessage("Solution " + std::to_string(i) + ": " + std::to_string(solutions[i]->getFitness()) + " → " + solutions[i]->getRoot()->toString());
+    // }
 
     // Find best solution
     Solution* bestSolution = findBestSolution(solutions);
