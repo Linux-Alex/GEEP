@@ -50,6 +50,7 @@ protected:
 
     // Crossover method
     Crossover *crossover;
+    Crossover *gpuCrossover;
 
     // Elitism
     size_t elitism;
@@ -112,6 +113,9 @@ public:
     // Crossover method
     Problem& setCrossover(Crossover* crossover) { this->crossover = crossover; return *this; }
     Crossover* getCrossover() { return crossover; }
+
+    Problem& setGPUCrossover(Crossover* gpuCrossover) { this->gpuCrossover = gpuCrossover; return *this; }
+    Crossover* getGPUCrossover() { return gpuCrossover; }
 
     // Elitism
     Problem& setElitism(size_t elitism) { this->elitism = elitism; return *this; }

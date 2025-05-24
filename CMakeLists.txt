@@ -71,6 +71,7 @@ add_executable(GEEP src/main.cpp
         src/crossover/Crossover.h
         src/crossover/SubtreeCrossover.cpp
         src/crossover/SubtreeCrossover.h
+        src/crossover/SubtreeCrossover.cu
         src/nodes/functions/DivideOperator.cpp
         src/nodes/functions/DivideOperator.h
         src/nodes/functions/SubtractOperator.cpp
