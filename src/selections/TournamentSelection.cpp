@@ -20,3 +20,9 @@ Solution* TournamentSelection::select(const std::vector<Solution *> &population)
 
     return best;
 }
+
+std::pair<int, int> TournamentSelection::getSelectedParentsForCrossover(const std::vector<Solution *> &population, float reproductionRate) {
+    // Not implemented for tournament selection
+    throw std::runtime_error("TournamentSelection does not support getSelectedParentsForCrossover");
+}
+

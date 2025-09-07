@@ -52,7 +52,7 @@ public:
     void setValues(const std::vector<double>& values);
 
     // Set root
-    void setRoot(Node* root);
+    Solution& setRoot(Node* root);
 
     // Fitness getter and setter
     double getFitness() const { return fitness; }

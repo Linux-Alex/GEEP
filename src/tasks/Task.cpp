@@ -180,11 +180,6 @@ void Task::runOnGPU() {
     GPUTree gpu_trees;
     gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
-    // Allocate fitness array
-    float* gpu_fitness;
-    cudaMallocManaged(&gpu_fitness, problem->getPopulationSize() * sizeof(float));
-    cudaMemset(gpu_fitness, -1, problem->getPopulationSize() * sizeof(float));
-
     // Prepare initial population
     std::vector<Solution *> solutions; // Use vector for easier management (deleting)
     for (size_t i = 0; i < problem->getPopulationSize(); i++) {
@@ -202,14 +197,13 @@ void Task::runOnGPU() {
 
     while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
         // GPU evaluation
-        cudaMemset(gpu_fitness, -1, problem->getPopulationSize() * sizeof(float));
-        dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
+        dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
         evaluations += problem->getPopulationSize();
 
         // Update CPU fitness values
         for (size_t i = 0; i < solutions.size(); i++) {
-            solutions[i]->setFitness(gpu_fitness[i]);
-            if (gpu_fitness[i] == 0.0f) {
+            solutions[i]->setFitness(gpu_trees.fitness_values[i]);
+            if (gpu_trees.fitness_values[i] == 0.0f) {
                 LogHelper::logMessage("Prfect solution found in generation " + std::to_string(generations));
                 break;
             }
@@ -218,20 +212,31 @@ void Task::runOnGPU() {
         // Selection (on CPU)
         std::vector<Solution *> newSolutions;
 
-        // Elitism
-        if (problem->getElitism() > 0) {
-            std::sort(solutions.begin(), solutions.end(), [](Solution* a, Solution* b) {
-                return a->getFitness() < b->getFitness();
-            });
+        // Selection (on GPU)
+        GPUTree new_gpu_trees;
+        new_gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
-            for (size_t i = 0; i < problem->getElitism(); i++) {
-                newSolutions.push_back(solutions[i]);
-            }
+        // TODO: Elitism
+        // if (problem->getElitism() > 0) {
+        //     std::sort(solutions.begin(), solutions.end(), [](Solution* a, Solution* b) {
+        //         return a->getFitness() < b->getFitness();
+        //     });
+        //
+        //     for (size_t i = 0; i < problem->getElitism(); i++) {
+        //         newSolutions.push_back(solutions[i]);
+        //     }
+        // }
+
+        // Check if crossover is set
+        if (problem->getCrossover() == nullptr) {
+            throw std::runtime_error("Crossover method is not set.");
         }
 
-        // GPU crossover and mutation
-        // GPUTree new_gpu_trees;
-        // new_gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
+        // Selection
+        problem->getSelection()->getSelectedParentsForCrossoverGPU(&gpu_trees, problem->getCrossover()->getReproductionRate());
+
+        // Reproduction
+        problem->getCrossover()->crossoverGPU(&gpu_trees, &new_gpu_trees);
 
         while (newSolutions.size() < problem->getPopulationSize()) {
             // Selection on CPU
@@ -271,11 +276,11 @@ void Task::runOnGPU() {
     }
 
     // Final evaluation and cleanup
-    dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees, gpu_fitness);
+    dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
 
     // Update CPU fitness values
     for (size_t i = 0; i < solutions.size(); i++) {
-        solutions[i]->setFitness(gpu_fitness[i]);
+        solutions[i]->setFitness(gpu_trees.fitness_values[i]);
     }
 
     // Print fitness values
@@ -290,7 +295,6 @@ void Task::runOnGPU() {
 
     // Cleanup
     gpu_trees.free();
-    cudaFree(gpu_fitness);
     for (auto& solution : solutions) {
         delete solution;
     }

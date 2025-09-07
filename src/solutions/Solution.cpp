@@ -50,7 +50,7 @@ void Solution::setValue(double value) { values.push_back(value); }
 
 void Solution::setValues(const std::vector<double> &values) { this->values = values; }
 
-void Solution::setRoot(Node* root) { this->root = std::move(root); }
+Solution& Solution::setRoot(Node* root) { this->root = std::move(root); return *this; }
 
 Node * Solution::getRandomNode() {
     if (!root)

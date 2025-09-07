@@ -19,6 +19,13 @@ struct GPUTree {
     size_t capacity;     // Max nodes per tree
     size_t population;   // Number of trees
 
+    // Selection helpers
+    int* selection_parent1_idx; // Parent 1 indices for selection
+    int* selection_parent2_idx; // Parent 2 indices for selection
+
+    // Fitness values
+    float* fitness_values; // Fitness values for each tree
+
     // Variable name to index mapping
     std::unordered_map<std::string, int> variable_indices;
     int nextVariableId = 0; // For assigning unique IDs to variables

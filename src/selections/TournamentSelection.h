@@ -5,6 +5,8 @@
 #ifndef TOURNAMENTSELECTION_H
 #define TOURNAMENTSELECTION_H
 
+#include <stdexcept>
+
 #include "Selection.h"
 
 class TournamentSelection : public Selection {
@@ -16,6 +18,12 @@ public:
 
     // Tournament selection
     Solution* select(const std::vector<Solution*>& population) override;
+
+    // Get selected parents for crossover for CPU
+    std::pair<int, int> getSelectedParentsForCrossover(const std::vector<Solution*>& population, float reproductionRate) override;
+
+    // Get selected parents for crossover for GPU
+    void getSelectedParentsForCrossoverGPU(GPUTree* population, float reproduction_rate) override;
 };
 
 

@@ -9,6 +9,9 @@
 #include "../solutions/Solution.h"
 
 class Crossover {
+private:
+    float reproductionRate = 0.9f;
+
 public:
     virtual ~Crossover() = default;
 
@@ -16,7 +19,11 @@ public:
     virtual std::vector<Solution*> crossover(Solution* parent1, Solution* parent2) = 0;
 
     // Method for performing crossover on GPU
-    virtual void crossoverGPU(GPUTree *population, size_t parent_idx1, size_t node_idx1, size_t parent_idx2, size_t node_idx2) {};
+    virtual void crossoverGPU(GPUTree* old_population, GPUTree* new_population) {};
+
+    // Chained setter and getter for reproduction rate
+    Crossover& setReproductionRate(float rate) { reproductionRate = rate; return *this; }
+    float getReproductionRate() const { return reproductionRate; }
 };
 
 

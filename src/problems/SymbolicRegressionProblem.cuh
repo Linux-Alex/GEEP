@@ -44,7 +44,7 @@ public:
     double evaluate(Solution *solution) override;
 
     // Evaluate the solution with GPU
-    void gpuEvaluate(GPUTree& trees, float* fitnesses);
+    void gpuEvaluate(GPUTree& trees);
 
     // Test GPU computing
     static void testGPUComputing();

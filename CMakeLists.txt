@@ -65,6 +65,7 @@ add_executable(GEEP src/main.cpp
         src/selections/Selection.h
         src/selections/TournamentSelection.cpp
         src/selections/TournamentSelection.h
+        src/selections/TournamentSelection.cu
         src/selections/RouletteWheelSelection.cpp
         src/selections/RouletteWheelSelection.h
         src/crossover/Crossover.cpp
@@ -141,9 +142,16 @@ add_executable(GEEPTests src/tests/main_test.cpp
         src/selections/Selection.cpp
         src/selections/TournamentSelection.h
         src/selections/TournamentSelection.cpp
+        src/selections/TournamentSelection.cu
+        src/crossover/Crossover.h
+        src/crossover/Crossover.cpp
+        src/crossover/SubtreeCrossover.h
+        src/crossover/SubtreeCrossover.cpp
+        src/crossover/SubtreeCrossover.cu
         src/helpers/NumberConversions.h
         src/helpers/NumberConversions.cpp
-
+        src/tests/SubtreeCrossoverTest.cu
+        src/tests/SubtreeCrossoverTest.h
 )
 
 # Link GoogleTest and your app code as needed

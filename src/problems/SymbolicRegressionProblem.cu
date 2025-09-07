@@ -168,7 +168,7 @@ __global__ void gpuEvaluateKernel(
     // printf("Fitnesses: %f on idx: %d\n", fitnesses[idx], idx);
 }
 
-void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
+void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees) {
     // printf("\n=== Starting GPU Evaluation ===\n");
 
     // 1. Validate inputs
@@ -247,7 +247,7 @@ void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees, float *fitnesses) {
         trees.values,
         trees.children,
         trees.node_counts,
-        fitnesses,
+        trees.fitness_values,
         targetData, // this->getTargetData(),
         targetValues, // this->getTargetValues(),
         this->getNumTargets(),
