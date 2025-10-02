@@ -59,13 +59,13 @@ REGISTER_PROGRAM(003_Minimal_example_for_symbolic_regression) {
 
     try {
         // Run the task on CPU
-        symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::CPU).run();
+        // symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::CPU).run();
 
         // Run the task on GPU
         symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::GPU).run();
 
         // Test GPU computing
-        // symbolicRegressionTask.testGPUComputing();
+        symbolicRegressionTask.testGPUComputing();
     } catch (std::exception &e) {
         LogHelper::logMessage("Error running symbolic regression program: " + std::string(e.what()), true);
         return;

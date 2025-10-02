@@ -196,6 +196,9 @@ void Task::runOnGPU() {
     size_t generations = 0;
 
     while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
+        // Write current generation info
+        // LogHelper::logMessage("Generation " + std::to_string(generations) + ", Evaluations: " + std::to_string(evaluations));
+
         // GPU evaluation
         dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
         evaluations += problem->getPopulationSize();
