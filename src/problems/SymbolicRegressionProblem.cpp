@@ -18,9 +18,16 @@ double SymbolicRegressionProblem::evaluate(Solution *solution) {
             continue;
         }
 
+        double result = 0.0;
         // Evaluate the solution
-        double result = solution->getRoot()->evaluate(state);
-
+        try {
+            result = solution->getRoot()->evaluate(state);
+        }
+        catch (const std::exception& e) {
+            // If evaluation fails, assign a high error
+            fitness += 1e6;
+            continue;
+        }
         // Calculate the difference (error)
         double error = result - target.getTargetValue();
 

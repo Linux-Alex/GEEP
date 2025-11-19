@@ -97,6 +97,12 @@ public:
     // Returns pointer to target values
     float* getTargetValues() const { return const_cast<float*>(target_values.data()); }
 
+    // Return length of target data
+    size_t getTargetDataLength() const { return flattened_targets.size(); }
+
+    // Return length of target values
+    size_t getTargetValuesLength() const { return target_values.size(); }
+
     // Returns number of targets
     size_t getNumTargets() const { return targets.size(); }
 

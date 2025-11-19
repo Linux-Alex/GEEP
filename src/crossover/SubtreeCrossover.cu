@@ -13,7 +13,33 @@ __device__ int getRandomNode(
     curandState* state
 ) {
     size_t node_count = node_counts[tree_idx];
+    if (node_count == 0) return 0;
     return curand(state) % node_count;
+}
+
+__device__ size_t calculateSubtreeSize(
+    const int* nodes,
+    const int* children,
+    int tree_idx,
+    size_t capacity,
+    int start_pos
+) {
+    size_t size = 0;
+    int stack[100]; // Use a fixed-size stack for simplicity
+    int stack_top = 0;
+
+    stack[stack_top++] = start_pos;
+
+    while (stack_top > 0) {
+        int pos = stack[--stack_top];
+        size++;
+
+        int offset = tree_idx * (int)capacity + pos;
+        if (children[offset * 2] != -1) stack[stack_top++] = children[offset * 2];
+        if (children[offset * 2 + 1] != -1) stack[stack_top++] = children[offset * 2 + 1];
+    }
+
+    return size;
 }
 
 __global__ void subtreeCrossoverKernel(
@@ -44,32 +70,63 @@ __global__ void subtreeCrossoverKernel(
     int p1_idx = parent1_idx[i];
     int p2_idx = parent2_idx[i];
 
+    // Check for bounds
+    if (p1_idx < 0 || p1_idx >= (int)population_size) return;
+    if (p2_idx != -1 && (p2_idx < 0 || p2_idx >= (int)population_size)) return;
+
     // Case 1: No crossover (only reproduction)
     if (p2_idx == -1) {
-        size_t node_count = old_node_counts[p1_idx];
-        new_node_counts[i] = node_count;
+        for (int c = 0; c < 2; c++) {
+            int child_idx = i + c;
+            int parent_idx = (p1_idx + c) % population_size;
 
-        for (size_t j = 0; j < node_count; j++) {
-            int old_offset = p1_idx * (int)old_capacity + (int)j;
-            int new_offset = i * (int)old_capacity + (int)j;
+            size_t node_count = old_node_counts[parent_idx];
+            new_node_counts[child_idx] = node_count;
 
-            new_nodes[new_offset] = old_nodes[old_offset];
-            new_values[new_offset] = old_values[old_offset];
-            new_children[new_offset * 2]     = new_children[new_offset * 2]; // keep default if present
-            new_children[new_offset * 2 + 1] = new_children[new_offset * 2 + 1];
+            for (size_t j = 0; j < node_count; j++) {
+                int old_offset = parent_idx * old_capacity + j;
+                int new_offset = child_idx * old_capacity + j;
+
+                new_nodes[new_offset] = old_nodes[old_offset];
+                new_values[new_offset] = old_values[old_offset];
+
+                new_children[new_offset * 2]     = old_children[old_offset * 2];
+                new_children[new_offset * 2 + 1] = old_children[old_offset * 2 + 1];
+            }
         }
+
         return;
     }
 
     // Case 2: Crossover between two parents
     int cross_pos1, cross_pos2;
-    // do {
-    //     p1_node = getRandomNode(p1_idx, old_nodes, old_node_counts, &state);
-    //     p2_node = getRandomNode(p2_idx, old_nodes, old_node_counts, &state);
-    // } while ((p1_node + 1) + (p2_node + 1) >= old_capacity);
+    bool invalid;
+    do {
+        cross_pos1 = getRandomNode(p1_idx, old_nodes, old_node_counts, &state);
+        cross_pos2 = getRandomNode(p2_idx, old_nodes, old_node_counts, &state);
 
-    cross_pos1 = 1; // For testing purposes, select fixed nodes
-    cross_pos2 = 0; // For testing purposes, select fixed nodes
+        invalid = false;
+
+        // Calculate the sizes of the swapped subtrees
+        size_t subtree1_size = calculateSubtreeSize(old_nodes, old_children, p1_idx, old_capacity, cross_pos1);
+        size_t subtree2_size = calculateSubtreeSize(old_nodes, old_children, p2_idx, old_capacity, cross_pos2);
+
+        // Child 1: initial segment from p1 + swapped subtree from p2 + tail from p1
+        size_t child1_size = cross_pos1 + subtree2_size + (old_node_counts[p1_idx] - cross_pos1 - subtree1_size);
+        if (child1_size > old_capacity) invalid = true;
+
+        // Child 2: initial segment from p2 + swapped subtree from p1 + tail from p2
+        size_t child2_size = cross_pos2 + subtree1_size + (old_node_counts[p2_idx] - cross_pos2 - subtree2_size);
+        if (child2_size > old_capacity) invalid = true;
+
+    } while (invalid);
+    // } while ((cross_pos1 + 1) + (cross_pos2 + 1) >= old_capacity);
+
+    // cross_pos1 = 0;
+    // cross_pos2 = 0;
+
+    // cross_pos1 = 1; // For testing purposes, select fixed nodes
+    // cross_pos2 = 0; // For testing purposes, select fixed nodes
 
     // Calculate offsets (to start at the beggining of the tree)
     int old_parent1_offset = p1_idx * (int)old_capacity;
@@ -247,12 +304,23 @@ void SubtreeCrossover::crossoverGPU(GPUTree* old_population, GPUTree* new_popula
     int blocks = (num_pairs + threads_per_block - 1) / threads_per_block;
 
     // Print kernel sizes and other info
-    std::cout << "Launching SubtreeCrossover kernel with " << blocks << " blocks of "
-              << threads_per_block << " threads each for " << num_pairs
-              << " tree pairs (population size " << pop_size << ")" << std::endl;
+    // std::cout << "Launching SubtreeCrossover kernel with " << blocks << " blocks of "
+    //           << threads_per_block << " threads each for " << num_pairs
+    //           << " tree pairs (population size " << pop_size << ")" << std::endl;
+    //
+    // std::cout << "Selection_parent1_idx: ";
+    // for (int idx = 0; idx < pop_size; ++idx) {
+    //     std::cout << old_population->selection_parent1_idx[idx];
+    //     if (idx + 1 < pop_size) std::cout << ' ';
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Selection_parent2_idx: ";
+    // for (int idx = 0; idx < pop_size; ++idx) {
+    //     std::cout << old_population->selection_parent2_idx[idx];
+    //     if (idx + 1 < pop_size) std::cout << ' ';
+    // }
+    // std::cout << std::endl;
 
-    std::cout << "Selection_parent1_idx: " << *old_population->selection_parent1_idx << std::endl;
-    std::cout << "Selection_parent2_idx: " << *old_population->selection_parent2_idx << std::endl;
 
     subtreeCrossoverKernel<<<blocks, threads_per_block>>>(
         // Input: Parent population
@@ -274,13 +342,18 @@ void SubtreeCrossover::crossoverGPU(GPUTree* old_population, GPUTree* new_popula
         seed
     );
 
-    // Synchronize to ensure kernel completion
-    cudaDeviceSynchronize();
+    // ADD PROPER ERROR CHECKING
+    cudaError_t kernelErr = cudaGetLastError();
+    if (kernelErr != cudaSuccess) {
+        std::cerr << "Kernel launch error: " << cudaGetErrorString(kernelErr) << std::endl;
+        throw std::runtime_error("Kernel launch failed");
+    }
 
-    // Fetch cuda errors
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        std::cerr << "CUDA error in SubtreeCrossover::crossoverGPU: " << cudaGetErrorString(err) << std::endl;
+    // SYNCHRONIZE PROPERLY
+    cudaError_t syncErr = cudaDeviceSynchronize();
+    if (syncErr != cudaSuccess) {
+        std::cerr << "Kernel execution error: " << cudaGetErrorString(syncErr) << std::endl;
+        throw std::runtime_error("Kernel execution failed");
     }
 
 }

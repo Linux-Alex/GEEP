@@ -101,8 +101,11 @@ Node *Problem::buildRandomTree(const std::vector<FunctionFactory> &functionSet,
         return nullptr;
     }
 
+    // Random value
+    float randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
     // Decide whether to create a terminal or function node
-    bool createTerminal = (currentDepth >= maxDepth) || (getRandomInt(0, 1) == 0);
+    bool createTerminal = (currentDepth >= maxDepth) || (randomValue >= 0.5f);
 
     if (createTerminal) {
         // Create a terminal node

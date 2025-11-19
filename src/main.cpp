@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     parser.addOption(QCommandLineOption("example", "Run an example program.", "program"));
     parser.addOption(QCommandLineOption("example-list", "List examples by type: all|program|xml.", "type", "all"));
     parser.addOption(QCommandLineOption("check-cuda", "Check for CUDA support."));
+    parser.addOption(QCommandLineOption("program", "Specify the program name.", "own-program"));
 
     parser.process(a);
 
@@ -85,6 +86,18 @@ int main(int argc, char *argv[]) {
         }
         catch (const std::exception& e) {
             std::cerr << "Error running example: " << e.what() << std::endl;
+            return 1;
+        }
+    }
+
+    // If the example option is set, run the own program
+    if (parser.isSet("program")) {
+        try {
+            ExampleRunner::run(parser.value("program").toStdString());
+            return 0;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Error running own program: " << e.what() << std::endl;
             return 1;
         }
     }

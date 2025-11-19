@@ -19,6 +19,7 @@ Task::Task(const std::string &name): id(ID_COUNTER++), problem(nullptr), solutio
 Task::Task(const std::string &name, Problem *problem, Solution *solution, GEEPConfig* config) : id(ID_COUNTER++), problem(problem), solution(solution), config(config) { }
 
 Task::~Task() {
+    LogHelper::logMessage("All things in task " + std::to_string(id) + " finished. This task will be closed.");
     // Delete the solution
     delete solution;
 }
@@ -105,11 +106,26 @@ void Task::runOnCPU() {
         }
 
         while (newSolutions.size() < problem->getPopulationSize()) {
+            // Generate random number between 0 and 1
+            float randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
             // Select parents
             Solution* parent1 = problem->getSelection()->select(solutions);
             Solution* parent2 = problem->getSelection()->select(solutions);
 
-            std::vector<Solution*> children = problem->getCrossover()->crossover(parent1, parent2);
+            std::vector<Solution*> children;
+
+            // Check for reproduction
+            if (problem->getCrossover()->getReproductionRate() <= randomValue) {
+                children = {
+                    &(new Solution())->setRoot(parent1->getRoot()->clone()),
+                    &(new Solution())->setRoot(parent2->getRoot()->clone())
+                };
+            }
+            else {
+                children = problem->getCrossover()->crossover(parent1, parent2);
+            }
+
             for (Solution* child : children) {
                 // TODO: Mutate
                 // child->mutate();
@@ -199,21 +215,61 @@ void Task::runOnGPU() {
         // Write current generation info
         // LogHelper::logMessage("Generation " + std::to_string(generations) + ", Evaluations: " + std::to_string(evaluations));
 
+        // CPU evaluation
+        // solutions = gpu_trees.getCPUSolutions();
+        // for (size_t i = 0; i < solutions.size(); i++) {
+        //     double fitness = problem->evaluate(solutions[i]);
+        //     gpu_trees.fitness_values[i] = static_cast<float>(fitness);
+        // }
+
+        // Check if any solution is wierd
+        // solutions = gpu_trees.getCPUSolutions();
+        // for (int i = 0; i < problem->getPopulationSize(); i++) {
+        //     gpu_trees.addSolution(i, solutions[i]);
+        // }
+
         // GPU evaluation
         dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
         evaluations += problem->getPopulationSize();
 
+        // Print first 2 GPU trees for debugging
+        // for (size_t i = 0; i < 8 && i < problem->getPopulationSize(); i++) {
+        //     int node_count = gpu_trees.node_counts[i];
+        //     std::string tree_str = "GPU Tree " + std::to_string(i) + ": ";
+        //     for (size_t j = 0; j < node_count; j++) {
+        //         tree_str += std::to_string((int)gpu_trees.nodes[i * problem->getMaxNodes() + j]) + " ";
+        //     }
+        //     tree_str += "\nValues: ";
+        //     for (size_t j = 0; j < node_count; j++) {
+        //         tree_str += std::to_string(gpu_trees.values[i * problem->getMaxNodes() + j]) + " ";
+        //     }
+        //     tree_str += "\nChildren:";
+        //     for (size_t j = 0; j < node_count * 2; j++) {
+        //         tree_str += std::to_string(gpu_trees.children[i * problem->getMaxNodes() * 2 + j]) + " ";
+        //     }
+        //     tree_str += "\nNode count: " + std::to_string(node_count);
+        //     LogHelper::logMessage(tree_str);
+        // }
+        // solutions = gpu_trees.getCPUSolutions();
+
+
+        // Print first 5 solutions for debugging
+        // for (size_t i = 0; i < 6 && i < solutions.size(); i++) {
+        //     LogHelper::logMessage("Initial solution " + std::to_string(i) + ": " + solutions[i]->getRoot()->toString());
+        // }
+
+
         // Update CPU fitness values
-        for (size_t i = 0; i < solutions.size(); i++) {
-            solutions[i]->setFitness(gpu_trees.fitness_values[i]);
-            if (gpu_trees.fitness_values[i] == 0.0f) {
-                LogHelper::logMessage("Prfect solution found in generation " + std::to_string(generations));
-                break;
-            }
-        }
+        // for (size_t i = 0; i < solutions.size(); i++) {
+        //     solutions[i]->setFitness(gpu_trees.fitness_values[i]);
+        //     if (gpu_trees.fitness_values[i] == 0.0f) {
+        //         LogHelper::logMessage("Prfect solution found in generation " + std::to_string(generations));
+        //         break;
+        //     }
+        // }
 
         // Selection (on CPU)
-        std::vector<Solution *> newSolutions;
+        // std::vector<Solution *> newSolutions;
 
         // Selection (on GPU)
         GPUTree new_gpu_trees;
@@ -235,33 +291,47 @@ void Task::runOnGPU() {
             throw std::runtime_error("Crossover method is not set.");
         }
 
+
+        // Print out selected how many parents2 have -1 (index not selected)
+        // int not_selected_count = 0;
+        // for (size_t i = 0; i < gpu_trees.population; i++) {
+        //     if (gpu_trees.selection_parent2_idx[i] == -1) {
+        //         not_selected_count++;
+        //     }
+        // }
+        // LogHelper::logMessage("Selected parents with -1 index (not selected): " + std::to_string(not_selected_count));
+
         // Selection
-        problem->getSelection()->getSelectedParentsForCrossoverGPU(&gpu_trees, problem->getCrossover()->getReproductionRate());
+        problem->getSelection()->getSelectedParentsForCrossoverGPU(&gpu_trees, problem->getCrossover()->getReproductionRate() / 2.0f);
 
-        // Reproduction
-        problem->getCrossover()->crossoverGPU(&gpu_trees, &new_gpu_trees);
-
-        while (newSolutions.size() < problem->getPopulationSize()) {
-            // Selection on CPU
-            Solution* parent1 = problem->getSelection()->select(solutions);
-            Solution* parent2 = problem->getSelection()->select(solutions);
-
-            // Crossover on GPU
-            // int parent1_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent1));
-            // int parent2_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent2));
-
-            // TODO: Implement GPU crossover kernel call
-            // gpuCrossover(gpu_trees, new_gpu_trees, parent1_idx, parent2_idx, newSolutions_idx);
-
-            // For now fall back to CPU crossover
-            std::vector<Solution *> children = problem->getCrossover()->crossover(parent1, parent2);
-
-            for (Solution* child : children) {
-                if (newSolutions.size() < problem->getPopulationSize()) {
-                    newSolutions.push_back(child);
-                }
-            }
+        try {
+            // Crossover with reproduction
+            problem->getCrossover()->crossoverGPU(&gpu_trees, &new_gpu_trees);
+        } catch (const std::exception& e) {
+            LogHelper::logMessage("Problem during crossover: " + std::string(e.what()) + ". Retrying crossover...", true);
         }
+
+        // while (newSolutions.size() < problem->getPopulationSize()) {
+        //     // Selection on CPU
+        //     Solution* parent1 = problem->getSelection()->select(solutions);
+        //     Solution* parent2 = problem->getSelection()->select(solutions);
+        //
+        //     // Crossover on GPU
+        //     // int parent1_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent1));
+        //     // int parent2_idx = std::distance(solutions.begin(), std::find(solutions.begin(), solutions.end(), parent2));
+        //
+        //     // TODO: Implement GPU crossover kernel call
+        //     // gpuCrossover(gpu_trees, new_gpu_trees, parent1_idx, parent2_idx, newSolutions_idx);
+        //
+        //     // For now fall back to CPU crossover
+        //     std::vector<Solution *> children = problem->getCrossover()->crossover(parent1, parent2);
+        //
+        //     for (Solution* child : children) {
+        //         if (newSolutions.size() < problem->getPopulationSize()) {
+        //             newSolutions.push_back(child);
+        //         }
+        //     }
+        // }
 
         // Replace population
         // Free old GPU memory
@@ -269,17 +339,34 @@ void Task::runOnGPU() {
         // gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
 
         // Convert new solution to GPU format
-        for (size_t i = 0; i < newSolutions.size(); i++) {
-            gpu_trees.addSolution(i, newSolutions[i]);
-        }
+        // for (size_t i = 0; i < newSolutions.size(); i++) {
+        //     gpu_trees.addSolution(i, newSolutions[i]);
+        // }
 
-        solutions = newSolutions;
+        // solutions = newSolutions;
+        // gpu_trees.nodes = new_gpu_trees.nodes;
+        // gpu_trees.values = new_gpu_trees.values;
+        // gpu_trees.children = new_gpu_trees.children;
+        // gpu_trees.parent_indices = new_gpu_trees.parent_indices;
+        // gpu_trees.node_counts = new_gpu_trees.node_counts;
+
+        // gpu_trees = std::move(new_gpu_trees);
+        gpu_trees.moveDataFrom(std::move(new_gpu_trees));
+
+        new_gpu_trees.free();
 
         generations++;
     }
 
     // Final evaluation and cleanup
     dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
+    // CPU evaluation
+    solutions = gpu_trees.getCPUSolutions();
+    for (size_t i = 0; i < solutions.size(); i++) {
+        // solutions[i]->setFitness(gpu_trees.fitness_values[i]);
+        double fitness = problem->evaluate(solutions[i]);
+        gpu_trees.fitness_values[i] = static_cast<float>(fitness);
+    }
 
     // Update CPU fitness values
     for (size_t i = 0; i < solutions.size(); i++) {
@@ -295,6 +382,8 @@ void Task::runOnGPU() {
     Solution* bestSolution = findBestSolution(solutions);
     LogHelper::logMessage("Best solution: " + std::to_string(bestSolution->getFitness()));
     LogHelper::logMessage(bestSolution->getRoot()->toString());
+
+    gpu_trees.clearVariableMapping();
 
     // Cleanup
     gpu_trees.free();

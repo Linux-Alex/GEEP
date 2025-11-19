@@ -12,77 +12,120 @@ SymbolicRegressionProblem::~SymbolicRegressionProblem() {
 
 __device__ float evaluateTreeWithX(const int* nodes, const float* values,
                                  const int* children, size_t node_count,
-                                 float x_value) {
+                                 float x_value, size_t number_of_variables,
+                                 const float* target_data, const float* target_values) {
     // Temporary storage for computed values
     float temp_values[32];  // Adjust size based on max tree depth
     bool computed[32] = {false};  // Track which nodes have been computed
 
-    // Process nodes from last to first
+    // New function
     for (int i = node_count - 1; i >= 0; i--) {
-        // Skip if already computed
-        if (computed[i]) continue;
-
         // Check if this is a terminal node (no children)
         if (children[i*2] == -1 && children[i*2+1] == -1) {
             switch (nodes[i]) {
-                case 0:  // Variable node
-                    temp_values[i] = x_value;
+                case 0: // Variable node
+                    temp_values[i] = target_data[static_cast<int>(values[i])];
                     break;
-                case 1:  // Constant node
+                case 1: // Constant node
                     temp_values[i] = values[i];
                     break;
                 default:
                     temp_values[i] = NAN;  // Invalid terminal
             }
-            computed[i] = true;
         }
         else {
-            // Check if children are computed
-            bool left_ready = (children[i*2] == -1) || computed[children[i*2]];
-            bool right_ready = (children[i*2+1] == -1) || computed[children[i*2+1]];
+            int left_val = temp_values[children[i*2]];
+            int right_val = temp_values[children[i*2+1]];
 
-            if (left_ready && right_ready) {
-                // Get left value (either from temp or original)
-                float left_val = (children[i*2] == -1) ?
-                    ((nodes[i*2] == 0) ? x_value : values[i*2]) :
-                    temp_values[children[i*2]];
-
-                // Get right value (either from temp or original)
-                float right_val = (children[i*2+1] == -1) ?
-                    ((nodes[i*2+1] == 0) ? x_value : values[i*2+1]) :
-                    temp_values[children[i*2+1]];
-
-                // Compute operation
-                switch (nodes[i]) {
-                    case 2:  // Add
-                        temp_values[i] = left_val + right_val;
-                        break;
-                    case 3:  // Subtract
-                        temp_values[i] = left_val - right_val;
-                        break;
-                    case 4:  // Multiply
-                        temp_values[i] = left_val * right_val;
-                        break;
-                    case 5:  // Divide
-                        temp_values[i] = (right_val != 0.0f) ?
-                                         left_val / right_val : FLT_MAX;
-                        break;
-                    default:
-                        temp_values[i] = NAN;  // Invalid operator
-                }
-                computed[i] = true;
+            switch (nodes[i]) {
+                case 2:  // Add
+                    temp_values[i] = left_val + right_val;
+                    break;
+                case 3:  // Subtract
+                    temp_values[i] = left_val - right_val;
+                    break;
+                case 4:  // Multiply
+                    temp_values[i] = left_val * right_val;
+                    break;
+                case 5:  // Divide
+                    temp_values[i] = (right_val != 0.0f) ?
+                                     left_val / right_val : 0.0f;
+                    break;
+                default:
+                    temp_values[i] = NAN;  // Invalid operator
             }
         }
     }
 
     return temp_values[0];  // Root node value
+
+    // Process nodes from last to first
+    // for (int i = node_count - 1; i >= 0; i--) {
+    //     // Skip if already computed
+    //     if (computed[i]) continue;
+    //
+    //     // Check if this is a terminal node (no children)
+    //     if (children[i*2] == -1 && children[i*2+1] == -1) {
+    //         switch (nodes[i]) {
+    //             case 0:  // Variable node
+    //                 temp_values[i] = x_value;
+    //                 break;
+    //             case 1:  // Constant node
+    //                 temp_values[i] = values[i];
+    //                 break;
+    //             default:
+    //                 temp_values[i] = NAN;  // Invalid terminal
+    //         }
+    //         computed[i] = true;
+    //     }
+    //     else {
+    //         // Check if children are computed
+    //         bool left_ready = (children[i*2] == -1) || computed[children[i*2]];
+    //         bool right_ready = (children[i*2+1] == -1) || computed[children[i*2+1]];
+    //
+    //         if (left_ready && right_ready) {
+    //             // Get left value (either from temp or original)
+    //             float left_val = (children[i*2] == -1) ?
+    //                 ((nodes[i*2] == 0) ? x_value : values[i*2]) :
+    //                 temp_values[children[i*2]];
+    //
+    //             // Get right value (either from temp or original)
+    //             float right_val = (children[i*2+1] == -1) ?
+    //                 ((nodes[i*2+1] == 0) ? x_value : values[i*2+1]) :
+    //                 temp_values[children[i*2+1]];
+    //
+    //             // Compute operation
+    //             switch (nodes[i]) {
+    //                 case 2:  // Add
+    //                     temp_values[i] = left_val + right_val;
+    //                     break;
+    //                 case 3:  // Subtract
+    //                     temp_values[i] = left_val - right_val;
+    //                     break;
+    //                 case 4:  // Multiply
+    //                     temp_values[i] = left_val * right_val;
+    //                     break;
+    //                 case 5:  // Divide
+    //                     temp_values[i] = (right_val != 0.0f) ?
+    //                                      left_val / right_val : FLT_MAX;
+    //                     break;
+    //                 default:
+    //                     temp_values[i] = NAN;  // Invalid operator
+    //             }
+    //             computed[i] = true;
+    //         }
+    //     }
+    // }
+    //
+    // return temp_values[0];  // Root node value
 }
 
 __global__ void gpuEvaluateKernel(
     const int* nodes, const float* values, const int* children,
     const size_t* counts, float* fitnesses,
     const float* target_data, const float* target_values,
-    size_t num_targets, size_t population, int max_nodes)
+    size_t num_targets, size_t population, int max_nodes,
+    size_t number_of_variables = 1)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= population) return;
@@ -148,12 +191,16 @@ __global__ void gpuEvaluateKernel(
     for (size_t i = 0; i < num_targets; i++) {
         float x = target_data[i];
         // printf("X: %.2f\n", x);
-        float predicted = evaluateTreeWithX(
-            nodes + offset,
-            values + offset,
-            children + (offset * 2),
-            node_count,
-            x);
+        // float predicted = evaluateTreeWithX(
+        //     nodes + offset,
+        //     values + offset,
+        //     children + (offset * 2),
+        //     node_count,
+        //     x,
+        //     number_of_variables,
+        //     target_data + (number_of_variables * i),
+        //     target_values + i);
+        float predicted = 0.0f;
         // Print debug info
         // printf("X: %.2f (after evaluateTreeWithX)\n", x);
         // printf("Target : x=%.2f => pred=%.2f (expected=%.2f)\n", x, predicted, target_values[i]);
@@ -236,11 +283,11 @@ void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees) {
     float* targetData;
     float* targetValues;
 
-    cudaMallocManaged(&targetData, this->getNumTargets() * sizeof(float));
-    cudaMallocManaged(&targetValues, this->getNumTargets() * sizeof(float));
+    cudaMallocManaged(&targetData, this->getTargetDataLength() * sizeof(float));
+    cudaMallocManaged(&targetValues, this->getTargetValuesLength() * sizeof(float));
 
-    memcpy(targetData, this->getTargetData(), this->getNumTargets() * sizeof(float));
-    memcpy(targetValues, this->getTargetValues(), this->getNumTargets() * sizeof(float));
+    memcpy(targetData, this->getTargetData(), this->getTargetDataLength() * sizeof(float));
+    memcpy(targetValues, this->getTargetValues(), this->getTargetValuesLength() * sizeof(float));
 
     gpuEvaluateKernel<<<grid, block>>>(
         trees.nodes,
@@ -252,7 +299,8 @@ void SymbolicRegressionProblem::gpuEvaluate(GPUTree &trees) {
         targetValues, // this->getTargetValues(),
         this->getNumTargets(),
         trees.population,
-        this->getMaxNodes());
+        this->getMaxNodes(),
+        this->num_variables);
 
     // 7. Check for launch errors
     cudaError_t launchErr = cudaGetLastError();
@@ -403,7 +451,7 @@ void SymbolicRegressionProblem::testGPUComputing() {
     gpuEvaluateKernel<<<grid, block>>>(
         d_nodes, d_values, d_children, d_counts, d_fitnesses,
         d_target_data, d_target_values, num_targets,
-        population, max_nodes);
+        population, max_nodes, 1);
 
     cudaDeviceSynchronize();
 
@@ -449,16 +497,19 @@ void SymbolicRegressionProblem::prepareTargetData() {
     // Flatten targets into GPU-friendly format
     for (const auto& target : targets) {
         // Initialize all variables to 0
-        std::vector<float> vars(num_variables, 0.0f);
+        // std::vector<float> vars(num_variables, 0.0f);
 
-        // Set values for variables present in this targetmake
+        // Set values for variables present in this target
         for (const auto& [var_name, value] : target.getState()) {
-            vars[var_indices[var_name]] = static_cast<float>(value);
+            // vars[var_indices[var_name]] = static_cast<float>(value);
+            flattened_targets.push_back(static_cast<float>(value));
         }
 
-        // Add to flattened data
-        flattened_targets.insert(flattened_targets.end(), vars.begin(), vars.end());
         target_values.push_back(static_cast<float>(target.getTargetValue()));
+
+        // Add to flattened data
+        // flattened_targets.insert(flattened_targets.end(), vars.begin(), vars.end());
+        // target_values.push_back(static_cast<float>(target.getTargetValue()));
     }
 
     // Debug: Print flattened targets
@@ -470,5 +521,5 @@ void SymbolicRegressionProblem::prepareTargetData() {
     // for (float y : target_values) {
     //     printf("%.2f ", y);
     // }
-    // printf("\n");
+    printf("\n");
 }

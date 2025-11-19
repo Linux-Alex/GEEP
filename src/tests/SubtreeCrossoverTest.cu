@@ -171,10 +171,6 @@ TEST_F(SubtreeCrossoverTest, Tree2GPUTree) {
     printTree(population, 0);
     printTree(population, 1);
 
-    // Perform crossover - swap the first Add (node 1) with Multiply (node 0 in second tree)
-    // SubtreeCrossover crossover;
-    // crossover.crossoverGPU(&population, 0, 1, 1, 0);
-
 }
 
 

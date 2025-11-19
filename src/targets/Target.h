@@ -6,6 +6,7 @@
 #define TARGET_H
 #include <map>
 #include <string>
+#include <vector>
 
 
 class Target {
@@ -22,6 +23,9 @@ public:
 
     const std::map<std::string, double>& getState() const { return state; }
     const double getTargetValue() const { return targetValue; }
+
+    // Read targets from a CSV file
+    static std::vector<Target> readTargetsFromCSV(const std::string &filename, char delimiter, const std::string &targetColumn);
 };
 
 

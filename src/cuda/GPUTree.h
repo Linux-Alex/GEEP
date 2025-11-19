@@ -50,6 +50,9 @@ struct GPUTree {
 
     // Clears the variable mapping
     void clearVariableMapping();
+
+    // Move operations
+    void moveDataFrom(GPUTree&& other);
 };
 
 #endif //GPUTREE_H

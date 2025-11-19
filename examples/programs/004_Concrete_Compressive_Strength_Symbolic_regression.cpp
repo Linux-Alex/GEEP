@@ -1,4 +1,8 @@
 //
+// Created by aleks on 16. 11. 25.
+//
+
+//
 // Created by aleks on 26.4.2025.
 //
 #include "../ExampleRunner.h"
@@ -17,25 +21,23 @@
 #include "../../src/crossover/SubtreeCrossover.h"
 
 /**
- * PROBLEM DEFINITION: Find the function f(x) = x * 2 using symbolic regression.
+ * PROBLEM DEFINITION: Find the equation for Contrete Compressive Strength using symbolic regression.
  * The function is defined in the SymbolicRegressionProblem class.
  */
 
-REGISTER_PROGRAM(003_Minimal_example_for_symbolic_regression) {
-    // LogHelper::logMessage("Running symbolic regression program...");
-
+REGISTER_PROGRAM(004_Concrete_Compressive_Strength_Symbolic_regression) {
     // Create a new task
-Task symbolicRegressionTask("Symbolic regression");
+    Task symbolicRegressionTask("Symbolic regression");
 
     // Create a new problem
-    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find function by target data")
-        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 100))
+    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find equation for Concrete Compressive Strength")
+        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 300))
         // .setElitism(5)
-        .setSelection(new TournamentSelection(3))
-        .setCrossover(new SubtreeCrossover())
+        .setSelection(new TournamentSelection(9))
+        .setCrossover(&(new SubtreeCrossover())->setReproductionRate(0.02f))
         .setMaxDepth(5)
-        .setMaxNodes(16)
-        .setPopulationSize(12000);
+        .setMaxNodes(31)
+        .setPopulationSize(1000);
 
     problem.setFunctionSet({
         []() { return new AddOperator(); },
@@ -45,16 +47,18 @@ Task symbolicRegressionTask("Symbolic regression");
     });
 
     problem.setTerminalSet({
-        []() { return new VariableNode("x"); },
+        []() { return new VariableNode("Cement"); },
+        []() { return new VariableNode("Blast Furnace Slag"); },
+        []() { return new VariableNode("Fly Ash"); },
+        []() { return new VariableNode("Water"); },
+        []() { return new VariableNode("Superplasticizer"); },
+        []() { return new VariableNode("Coarse Aggregate"); },
+        []() { return new VariableNode("Fine Aggregate"); },
+        []() { return new VariableNode("Age"); },
         []() { return new ConstNode(); },
     });
 
-    problem.setTargets({
-        Target().setCondition("x", 1.0).setTargetValue(4.0),
-        Target().setCondition("x", 2.0).setTargetValue(9.0),
-        Target().setCondition("x", 3.0).setTargetValue(16.0),
-    });
-
+    problem.setTargets(Target::readTargetsFromCSV("/home/aleks/GEEP/GEEP/examples/data/Concrete Compressive Strength Data.csv", ',', "Concrete compressive strength"));
 
     // Add the problem to the program
     symbolicRegressionTask.setProblem(&problem);

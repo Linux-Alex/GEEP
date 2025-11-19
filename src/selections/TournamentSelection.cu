@@ -65,7 +65,10 @@ void TournamentSelection::getSelectedParentsForCrossoverGPU(GPUTree *population,
     }
 
     // Launch kernel
-    unsigned long seed = 22;
+    // unsigned long seed = 22;
+
+    // Random seed
+    unsigned long seed = rand() % 100000 + time(NULL);
     int threads_per_block = 256;
     int blocks = (pop_size + threads_per_block - 1) / threads_per_block;
 

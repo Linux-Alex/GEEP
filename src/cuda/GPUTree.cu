@@ -28,6 +28,7 @@ void GPUTree::allocate(size_t max_nodes, size_t population_size) {
    if (err != cudaSuccess) throw std::runtime_error("Failed to allocate values");
 
    err = cudaMallocManaged(&children, max_nodes * 2 * population_size * sizeof(int));
+   cudaMemset(children, -1, max_nodes * 2 * population_size * sizeof(int)); // Initialize to -1
    if (err != cudaSuccess) throw std::runtime_error("Failed to allocate children");
 
    err = cudaMallocManaged(&parent_indices, max_nodes * population_size * sizeof(int));
@@ -174,42 +175,57 @@ std::vector<Solution *> GPUTree::getCPUSolutions() {
    }
 
    // Allocate memory for CPU solutions
-   std::vector<Solution *> solutions(population);
+   std::vector<Solution *> solutions(population, nullptr);
 
    // Generate solutions
-   try {
-      for (size_t i = 0; i < population; i++) {
+   for (size_t i = 0; i < population; i++) {
+      try {
          size_t offset = i * capacity;
          size_t node_count = node_counts[i];
 
-         if (node_count == 0) {
+         // BACKUP: If node_count is invalid, create simple constant
+         if (node_count == 0 || node_count > capacity || node_count == SIZE_MAX || node_count > 10000) {
+            std::cerr << "WARNING: Invalid node_count " << node_count
+                      << " for tree " << i << ". Creating constant node." << std::endl;
             solutions[i] = new Solution();
-            continue; // Empty solution
+            solutions[i]->setRoot(new ConstNode(0.0f));
+            continue;
          }
 
          // Create a mapping from positions to nodes
          std::vector<Node *> node_map(node_count, nullptr);
+         bool construction_failed = false;
 
          // Preprocess nodes in reverse order (children before parents)
          for (int pos = node_count - 1; pos >= 0; pos--) {
             int absolute_pos = offset + pos;
+
+            // Validate absolute position
+            if (absolute_pos >= population * capacity) {
+               std::cerr << "WARNING: Position out of bounds for tree " << i
+                         << ". Creating constant node." << std::endl;
+               construction_failed = true;
+               break;
+            }
+
             int node_type = nodes[absolute_pos];
             float node_value = values[absolute_pos];
 
             Node *node = nullptr;
 
-            // Create appropriate node type
+            // Create appropriate node type with backup for unknown types
             switch (node_type) {
                case 0: {
                   // VariableNode
-                  int varId = static_cast<int>(values[absolute_pos]);
+                  int varId = static_cast<int>(node_value);
                   auto it = variable_reverse_map.find(varId);
 
                   if (it == variable_reverse_map.end()) {
-                     throw std::runtime_error("Variable ID not found in reverse map");
+                     // BACKUP: Use default variable name
+                     node = new VariableNode("x");
+                  } else {
+                     node = new VariableNode(it->second);
                   }
-
-                  node = new VariableNode(it->second);
                   break;
                }
                case 1: // ConstNode
@@ -228,50 +244,74 @@ std::vector<Solution *> GPUTree::getCPUSolutions() {
                   node = new DivideOperator();
                   break;
                default:
-                  throw std::runtime_error("Unknown node type: " + std::to_string(node_type));
+                  // BACKUP: Create constant node for unknown types
+                  std::cerr << "WARNING: Unknown node type " << node_type
+                            << " in tree " << i << ". Using constant 0." << std::endl;
+                  node = new ConstNode(0.0f);
+                  break;
             }
 
             node_map[pos] = node;
 
             // If it's a function node, add the children
-            if (node_type >= 2) {
+            if (node_type >= 2 && node_type <= 5) {
                FunctionNode *fn = dynamic_cast<FunctionNode *>(node);
                if (!fn) {
-                  throw std::runtime_error("Type mismatch: Node is not a function node");
+                  std::cerr << "WARNING: Type mismatch in tree " << i
+                            << ". Using constant 0." << std::endl;
+                  construction_failed = true;
+                  break;
                }
 
+               // These are indexes of children
                int left_child = children[absolute_pos * 2];
                int right_child = children[absolute_pos * 2 + 1];
 
+               // Validate and add left child
                if (left_child != -1) {
-                  int child_pos = left_child - offset;
-                  if (child_pos < 0 || child_pos >= node_count) {
-                     throw std::runtime_error("Invalid left child index: " + std::to_string(left_child));
+                  if (left_child < 0 || left_child >= node_count) {
+                     std::cerr << "WARNING: Invalid left child index " << left_child
+                               << " in tree " << i << ". Skipping child." << std::endl;
+                  } else if (node_map[left_child] != nullptr) {
+                     fn->addChild(node_map[left_child]);
                   }
-                  fn->addChild(node_map[child_pos]);
                }
 
+               // Validate and add right child
                if (right_child != -1) {
-                  int child_pos = right_child - offset;
-                  if (child_pos < 0 || child_pos >= node_count) {
-                     throw std::runtime_error("Invalid right child index: " + std::to_string(right_child));
+                  if (right_child < 0 || right_child >= node_count) {
+                     std::cerr << "WARNING: Invalid right child index " << right_child
+                               << " in tree " << i << ". Skipping child." << std::endl;
+                  } else if (node_map[right_child] != nullptr) {
+                     fn->addChild(node_map[right_child]);
                   }
-                  fn->addChild(node_map[child_pos]);
                }
             }
          }
 
-         // Create the solution with the root node
+         // BACKUP: If construction failed at any point, use constant node
+         if (construction_failed || node_map[0] == nullptr) {
+            std::cerr << "WARNING: Tree construction failed for tree " << i
+                      << ". Using constant node." << std::endl;
+            // Clean up any partially created nodes
+            for (Node* node : node_map) {
+               if (node) delete node;
+            }
+            solutions[i] = new Solution();
+            solutions[i]->setRoot(new ConstNode(0.0f));
+         } else {
+            // Success - create the solution with the root node
+            solutions[i] = new Solution();
+            solutions[i]->setRoot(node_map[0]);
+         }
+
+      } catch (const std::exception &e) {
+         // BACKUP: Catch any unexpected exceptions and use constant node
+         std::cerr << "ERROR: Unexpected exception for tree " << i
+                   << ": " << e.what() << ". Using constant node." << std::endl;
          solutions[i] = new Solution();
-         solutions[i]->setRoot(node_map[0]);
+         solutions[i]->setRoot(new ConstNode(0.0f));
       }
-   } catch (const std::exception &e) {
-      std::cerr << "Error generating CPU solutions: " << e.what() << std::endl;
-      for (Solution *s: solutions) {
-         if (s)
-            delete s;
-      }
-      throw;
    }
 
    return solutions;
@@ -313,3 +353,28 @@ void GPUTree::clearVariableMapping() {
    nextVariableId = 0;
 }
 
+// Move constructor
+void GPUTree::moveDataFrom(GPUTree&& other) {
+   // Free current data arrays only
+   if (nodes) cudaFree(nodes);
+   if (values) cudaFree(values);
+   if (children) cudaFree(children);
+   if (parent_indices) cudaFree(parent_indices);
+   if (node_counts) cudaFree(node_counts);
+
+   // Take ownership of other's data arrays
+   nodes = other.nodes;
+   values = other.values;
+   children = other.children;
+   parent_indices = other.parent_indices;
+   node_counts = other.node_counts;
+
+   // Reset other's data pointers (but keep its metadata)
+   other.nodes = nullptr;
+   other.values = nullptr;
+   other.children = nullptr;
+   other.parent_indices = nullptr;
+   other.node_counts = nullptr;
+
+   // Note: other's capacity, population, etc. remain intact
+}

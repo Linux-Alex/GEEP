@@ -80,6 +80,10 @@ add_executable(GEEP src/main.cpp
         src/cuda/GPUTree.h
         src/cuda/GPUTree.cu
         examples/programs/003_Minimal_example_for_symbolic_regression.cpp
+        src/mutation/Mutation.cpp
+        src/mutation/Mutation.h
+        src/mutation/Mutation.cu
+        examples/programs/004_Concrete_Compressive_Strength_Symbolic_regression.cpp
 )
 
 set_target_properties(GEEP PROPERTIES
