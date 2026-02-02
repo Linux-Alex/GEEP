@@ -1,7 +1,8 @@
 # GEEP (Genetic Evolutionary Engineering Platform)
 
-![GEEP Logo](assets/logo.png)
-
+<h1 align="center">
+  <img src="assets/logo.png" height="450px" />
+</h1>
 
 GEEP (Genetic Evolutionary Engineering Platform) is a powerful **C++ framework** for genetic programming, designed to enable the evolution of complex solutions through large-scale population-based optimization. Leveraging **CUDA acceleration**, GEEP parallelizes fitness evaluation and genetic operations, making it highly efficient for handling massive populations. This framework is ideal for researchers and developers aiming to solve high-dimensional problems using evolutionary algorithms while harnessing the power of GPU computing.
 
