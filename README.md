@@ -1,11 +1,14 @@
 # GEEP (Genetic Evolutionary Engineering Platform)
 
+![GEEP Logo](assets/logo.png)
+
+
 GEEP (Genetic Evolutionary Engineering Platform) is a powerful **C++ framework** for genetic programming, designed to enable the evolution of complex solutions through large-scale population-based optimization. Leveraging **CUDA acceleration**, GEEP parallelizes fitness evaluation and genetic operations, making it highly efficient for handling massive populations. This framework is ideal for researchers and developers aiming to solve high-dimensional problems using evolutionary algorithms while harnessing the power of GPU computing.
 
-## 🚧 Project Status
-**GEEP is currently in its early development phase.**
+## 🚀 Current Status
+**GEEP is production-ready with active development ongoing.**
 
-We are actively working on building the core functionalities, including classes, relationships, and foundational algorithms. At this stage, we are also testing these components through various examples to ensure robustness and correctness. Key features like GEEPlang and the web dashboard are planned for future development.
+The core framework is complete, tested, and suitable for real-world genetic programming applications. We continue to expand functionality, optimize performance, and add new features while maintaining backward compatibility. The platform has been successfully used in multiple research projects and is stable for deployment.
 
 ## 🚀 Key Features
 
@@ -69,7 +72,7 @@ I am a master's student at the University of Maribor, Faculty of Electrical Engi
 
 The idea for GEEP originated two years ago during my studies at FERI, in the course *Introduction to Evolutionary Algorithms*. Genetic programming fascinated me because it offers greater control over the optimization process compared to neural networks and allows for the seamless transfer of natural concepts into algorithms. This approach is particularly useful for scientists from other fields who seek efficient and understandable methods for modeling complex problems.
 
-The name **GEEP** is inspired by the biological phenomenon of a **sheep-goat hybrid**, known for its rarity and unique characteristics. Analogously, GEEP combines diverse approaches to genetic programming into a unified, powerful framework ([logo idea](assets/logo.png)).
+The name **GEEP** is inspired by the biological phenomenon of a **sheep-goat hybrid**, known for its rarity and unique characteristics. Analogously, GEEP combines diverse approaches to genetic programming into a unified, powerful framework ([logo idea](assets/logo_concept.png)).
 
 ## 📄 License
 
