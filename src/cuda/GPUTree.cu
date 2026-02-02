@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#include <thrust/device_ptr.h>
+#include <thrust/extrema.h>
+#include <limits>
+
 #include "CudaUtils.h"
 #include "../solutions/Solution.h"
 #include "../nodes/Node.h"
@@ -377,4 +381,18 @@ void GPUTree::moveDataFrom(GPUTree&& other) {
    other.node_counts = nullptr;
 
    // Note: other's capacity, population, etc. remain intact
+}
+
+float GPUTree::findLowestMSE() {
+   if (population == 0) return std::numeric_limits<float>::max();
+
+   thrust::device_ptr<float> fitness_ptr(fitness_values);
+   thrust::device_ptr<float> min_ptr = thrust::min_element(
+       fitness_ptr,
+       fitness_ptr + population
+   );
+
+   float min_value;
+   cudaMemcpy(&min_value, thrust::raw_pointer_cast(min_ptr), sizeof(float), cudaMemcpyDeviceToHost);
+   return min_value;
 }

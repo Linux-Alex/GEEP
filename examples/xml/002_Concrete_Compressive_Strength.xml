@@ -1,0 +1,63 @@
+<genetic_algorithm>
+    <problem_type>symbolic_regression</problem_type>
+    <problem_name>Find equation for Concrete Compressive Strength</problem_name>
+
+    <stopping_criteria>
+        <criterion type="generations">10000</criterion>
+        <!-- <criterion type="mse">100.0</criterion> -->
+    </stopping_criteria>
+
+    <algorithm_parameters>
+        <population_size>1000</population_size>
+        <elitism_count>10</elitism_count>
+        <max_depth>5</max_depth>
+        <max_nodes>31</max_nodes>
+    </algorithm_parameters>
+
+    <selection_method>
+        <type>tournament</type>
+        <tournament_size>9</tournament_size>
+    </selection_method>
+
+    <crossover_method>
+        <type>subtree_crossover</type>
+        <reproduction_rate>0.02</reproduction_rate>
+    </crossover_method>
+
+    <mutation_method>
+        <type>standard</type>
+        <mutation_rate>0.5</mutation_rate>
+    </mutation_method>
+
+    <function_set>
+        <function>add</function>
+        <function>multiply</function>
+        <function>divide</function>
+        <function>subtract</function>
+    </function_set>
+
+    <terminal_set>
+        <variable>Cement</variable>
+        <variable>Blast Furnace Slag</variable>
+        <variable>Fly Ash</variable>
+        <variable>Water</variable>
+        <variable>Superplasticizer</variable>
+        <variable>Coarse Aggregate</variable>
+        <variable>Fine Aggregate</variable>
+        <variable>Age</variable>
+        <constant/>
+    </terminal_set>
+
+    <execution_mode>gpu</execution_mode>
+    <!-- execution_mode can be: cpu or gpu -->
+
+    <target_data delimiter="," target_column="Concrete compressive strength">
+        Cement,Blast Furnace Slag,Fly Ash,Water,Superplasticizer,Coarse Aggregate,Fine Aggregate,Age,Concrete compressive strength
+        540.0,0.0,0.0,162.0,2.5,1040.0,676.0,28,79.99
+        540.0,0.0,0.0,162.0,2.5,1055.0,676.0,28,61.89
+        332.5,142.5,0.0,228.0,0.0,932.0,594.0,270,40.27
+        332.5,142.5,0.0,228.0,0.0,932.0,594.0,365,41.05
+        198.6,132.4,0.0,192.0,0.0,978.4,825.5,360,44.30
+        266.0,114.0,0.0,228.0,0.0,932.0,670.0,90,47.03
+    </target_data>
+</genetic_algorithm>

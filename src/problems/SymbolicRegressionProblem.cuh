@@ -20,7 +20,7 @@ __global__ void gpuEvaluateKernel(
     size_t num_targets, size_t population, int max_nodes);
 
 // Evaluate tree with X
-__device__ float evaluateTreeWithX(const int* nodes, const float* values,
+__device__ float evaluateTreeWithTargets(const int* nodes, const float* values,
                                    const int* children, size_t index, float x);
 
 class SymbolicRegressionProblem : public Problem {
@@ -41,13 +41,16 @@ public:
     ~SymbolicRegressionProblem() override;
 
     // Evaluate the solution with CPU
-    double evaluate(Solution *solution) override;
+    float evaluate(Solution *solution) override;
 
     // Evaluate the solution with GPU
     void gpuEvaluate(GPUTree& trees);
 
     // Test GPU computing
     static void testGPUComputing();
+
+    // Test GPU evaluation
+    static void testGPUEvaluation();
 
     // Set targets
     void setTargets(const std::vector<Target> &targets);
@@ -65,6 +68,11 @@ public:
 
     SymbolicRegressionProblem& setCrossover(Crossover* crossover) {
         Problem::setCrossover(crossover);
+        return *this;
+    }
+
+    SymbolicRegressionProblem& setMutation(Mutation* mutation) {
+        Problem::setMutation(mutation);
         return *this;
     }
 
@@ -90,6 +98,7 @@ public:
 
     // Prepare targets for GPU
     void prepareTargetData();
+    void prepareTargetData(GPUTree &tree);
 
     // Returns pointer to GPU-ready target data
     float* getTargetData() const { return const_cast<float*>(flattened_targets.data()); }

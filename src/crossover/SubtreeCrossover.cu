@@ -5,6 +5,9 @@
 #include "SubtreeCrossover.h"
 #include <curand_kernel.h>
 #include <iostream>
+#include <chrono>
+#include <random>
+
 
 __device__ int getRandomNode(
     int tree_idx,
@@ -296,7 +299,11 @@ void SubtreeCrossover::crossoverGPU(GPUTree* old_population, GPUTree* new_popula
     // TODO: Allocate new population if needed (optional)
 
     // Launch kernel
-    unsigned long seed = 22;
+    std::random_device rd;
+    auto now = std::chrono::high_resolution_clock::now();
+    auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        now.time_since_epoch()).count();
+    unsigned long seed = static_cast<unsigned long>(nanos) ^ rd();
     int threads_per_block = 256;
 
     // Each thread will process one PAIR of trees, so we need half as many threads

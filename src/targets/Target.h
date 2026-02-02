@@ -22,7 +22,7 @@ public:
     Target& setTargetValue(double targetValue);
 
     const std::map<std::string, double>& getState() const { return state; }
-    const double getTargetValue() const { return targetValue; }
+    double getTargetValue() const { return targetValue; }
 
     // Read targets from a CSV file
     static std::vector<Target> readTargetsFromCSV(const std::string &filename, char delimiter, const std::string &targetColumn);

@@ -7,26 +7,8 @@
 
 #include "../examples/ExampleRunner.h"
 #include "cuda/CudaUtils.h"
+#include "service/GEEPService.h"
 
-
-void processXmlFile(const QString& filePath) {
-    QFile file(filePath);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        std::cerr << "Cannot read file: " << filePath.toStdString() << std::endl;
-        return;
-    }
-
-    QXmlStreamReader xml(&file);
-    while (!xml.atEnd() && !xml.hasError()) {
-        xml.readNext();
-        // Handle XML parsing here (example: read elements, attributes, etc.)
-    }
-
-    if (xml.hasError()) {
-        std::cerr << "XML Error: " << xml.errorString().toStdString() << std::endl;
-    }
-    file.close();
-}
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
@@ -60,12 +42,20 @@ int main(int argc, char *argv[]) {
 
     // Handle options
     if (parser.isSet("service")) {
-        // Start as a service
-        std::cout << "Starting GEEP as a service..." << std::endl;
-        // Implement service logic here (e.g., run an event loop or thread)
+        quint16 port = parser.value("server-port").toUShort();
+
+        GEEPService service;
+        if (!service.startService(port)) {
+            return 1;
+        }
+
+        std::cout << "GEEP Service is running. Press Ctrl+C to stop." << std::endl;
+
+        // Keep the application running
+        return a.exec();
     } else if (parser.isSet("input")) {
         QString inputFile = parser.value("input");
-        processXmlFile(inputFile);
+        GEEPService::processXmlFile(inputFile);
     }
 
     QString outputDir = parser.value("output-dir");

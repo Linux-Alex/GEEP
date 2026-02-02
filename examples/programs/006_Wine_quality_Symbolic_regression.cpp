@@ -1,6 +1,7 @@
 //
-// Created by aleks on 16. 11. 25.
+// Created by aleks on 31. 01. 26.
 //
+
 
 #include "../ExampleRunner.h"
 #include "../LogHelper.h"
@@ -19,24 +20,24 @@
 #include "../../src/mutation/Mutation.h"
 
 /**
- * PROBLEM DEFINITION: Find the equation for Contrete Compressive Strength using symbolic regression.
+ * PROBLEM DEFINITION: Find the equation for wine quality assessment.
  * The function is defined in the SymbolicRegressionProblem class.
  */
 
-REGISTER_PROGRAM(004_Concrete_Compressive_Strength_Symbolic_regression) {
+REGISTER_PROGRAM(006_Wine_quality_Symbolic_regression) {
     // Create a new task
     Task symbolicRegressionTask("Symbolic regression");
 
     // Create a new problem
-    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find equation for Concrete Compressive Strength")
-    .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 300))
-    // .setElitism(5)
-    .setSelection(new TournamentSelection(9))
-    .setCrossover(&(new SubtreeCrossover())->setReproductionRate(0.02f))
-    .setMutation(new Mutation(0.5f))
-    .setMaxDepth(5)
-    .setMaxNodes(31)
-    .setPopulationSize(1000);
+    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find equation for wine quality assessment prediction")
+        .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 100000)/*.addCriterion(GENERATIONS, 1000)*/)
+        .setElitism(5)
+        .setSelection(new TournamentSelection(9))
+        .setCrossover(&(new SubtreeCrossover())->setReproductionRate(0.5f))
+        .setMutation(new Mutation(0.5f))
+        .setMaxDepth(5)
+        .setMaxNodes(31)
+        .setPopulationSize(1000);
 
     problem.setFunctionSet({
         []() { return new AddOperator(); },
@@ -46,18 +47,21 @@ REGISTER_PROGRAM(004_Concrete_Compressive_Strength_Symbolic_regression) {
     });
 
     problem.setTerminalSet({
-        []() { return new VariableNode("Cement"); },
-        []() { return new VariableNode("Blast Furnace Slag"); },
-        []() { return new VariableNode("Fly Ash"); },
-        []() { return new VariableNode("Water"); },
-        []() { return new VariableNode("Superplasticizer"); },
-        []() { return new VariableNode("Coarse Aggregate"); },
-        []() { return new VariableNode("Fine Aggregate"); },
-        []() { return new VariableNode("Age"); },
+        []() { return new VariableNode("fixed acidity"); },
+        []() { return new VariableNode("volatile acidity"); },
+        []() { return new VariableNode("citric acid"); },
+        []() { return new VariableNode("residual sugar"); },
+        []() { return new VariableNode("chlorides"); },
+        []() { return new VariableNode("free sulfur dioxide"); },
+        []() { return new VariableNode("total sulfur dioxide"); },
+        []() { return new VariableNode("density"); },
+        []() { return new VariableNode("pH"); },
+        []() { return new VariableNode("sulphates"); },
+        []() { return new VariableNode("alcohol"); },
         []() { return new ConstNode(); },
     });
 
-    problem.setTargets(Target::readTargetsFromCSV("/home/aleks/GEEP/GEEP/examples/data/Concrete Compressive Strength Data.csv", ',', "Concrete compressive strength"));
+    problem.setTargets(Target::readTargetsFromCSV("/home/aleks/GEEP/GEEP/examples/data/Wine Quality Red.csv", ';', "quality"));
 
     // Add the problem to the program
     symbolicRegressionTask.setProblem(&problem);
@@ -68,9 +72,6 @@ REGISTER_PROGRAM(004_Concrete_Compressive_Strength_Symbolic_regression) {
 
         // Run the task on GPU
         symbolicRegressionTask.setExecutionMode(Task::ExecutionMode::GPU).run();
-
-        // Test GPU computing
-        // symbolicRegressionTask.testGPUComputing();
     } catch (std::exception &e) {
         LogHelper::logMessage("Error running symbolic regression program: " + std::string(e.what()), true);
         return;

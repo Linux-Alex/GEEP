@@ -61,6 +61,12 @@ public:
 
     // Find best solution
     Solution* findBestSolution(const std::vector<Solution*>& solutions);
+
+    // Find lowest MSE on GPU
+    float findLowestMSEOnGPU(GPUTree& gpu_trees) { return gpu_trees.findLowestMSE(); };
+
+    // Find lowest MSE on GPU
+    float findLowestMSEOnCPU(const std::vector<Solution*>& solutions);
 };
 
 

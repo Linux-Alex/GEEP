@@ -1,5 +1,5 @@
 //
-// Created by aleks on 16. 11. 25.
+// Created by aleks on 1. 12. 25.
 //
 
 #include "../ExampleRunner.h"
@@ -19,24 +19,26 @@
 #include "../../src/mutation/Mutation.h"
 
 /**
- * PROBLEM DEFINITION: Find the equation for Contrete Compressive Strength using symbolic regression.
+ * PROBLEM DEFINITION: Find the function Nguyen-1: f(x) = x^2 + x + 1 using symbolic regression.
  * The function is defined in the SymbolicRegressionProblem class.
  */
 
-REGISTER_PROGRAM(004_Concrete_Compressive_Strength_Symbolic_regression) {
+REGISTER_PROGRAM(005_Nguyen_1_benchmark_problem) {
+
     // Create a new task
-    Task symbolicRegressionTask("Symbolic regression");
+    Task symbolicRegressionTask("Nguyen 2 Symbolic regression");
 
     // Create a new problem
-    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find equation for Concrete Compressive Strength")
-    .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 300))
-    // .setElitism(5)
-    .setSelection(new TournamentSelection(9))
-    .setCrossover(&(new SubtreeCrossover())->setReproductionRate(0.02f))
-    .setMutation(new Mutation(0.5f))
-    .setMaxDepth(5)
-    .setMaxNodes(31)
-    .setPopulationSize(1000);
+    SymbolicRegressionProblem problem = SymbolicRegressionProblem("Find function by target data")
+        // .setStopCrit(StopCriterion().addCriterion(GENERATIONS, 1000))
+        .setStopCrit(StopCriterion().addCriterion(MSE, 0))
+        .setElitism(0)
+        .setSelection(new TournamentSelection(3))
+        .setCrossover(&(new SubtreeCrossover())->setReproductionRate(0.02f))
+        .setMutation(new Mutation(0.02f))
+        .setMaxDepth(5)
+        .setMaxNodes(31)
+        .setPopulationSize(200);
 
     problem.setFunctionSet({
         []() { return new AddOperator(); },
@@ -46,18 +48,19 @@ REGISTER_PROGRAM(004_Concrete_Compressive_Strength_Symbolic_regression) {
     });
 
     problem.setTerminalSet({
-        []() { return new VariableNode("Cement"); },
-        []() { return new VariableNode("Blast Furnace Slag"); },
-        []() { return new VariableNode("Fly Ash"); },
-        []() { return new VariableNode("Water"); },
-        []() { return new VariableNode("Superplasticizer"); },
-        []() { return new VariableNode("Coarse Aggregate"); },
-        []() { return new VariableNode("Fine Aggregate"); },
-        []() { return new VariableNode("Age"); },
+        []() { return new VariableNode("x"); },
         []() { return new ConstNode(); },
     });
 
-    problem.setTargets(Target::readTargetsFromCSV("/home/aleks/GEEP/GEEP/examples/data/Concrete Compressive Strength Data.csv", ',', "Concrete compressive strength"));
+    // Generate target data for Nguyen-1: f(x) = x^2 + x + 1 for x in [1 .. 20 by step 1]
+    std::vector<Target> targets;
+    for (int x = 1; x <= 20; x++) {
+        double y =  (x * x * x * x * x) + (x * x * x * x) + (x * x * x) + (x * x) + x + 1;
+        targets.push_back(Target().setCondition("x", static_cast<double>(x)).setTargetValue(y));
+    }
+
+    problem.setTargets(targets);
+
 
     // Add the problem to the program
     symbolicRegressionTask.setProblem(&problem);

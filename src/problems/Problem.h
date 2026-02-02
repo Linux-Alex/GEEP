@@ -13,6 +13,7 @@
 #include "ObjectiveType.h"
 #include "../criterions/StopCriterion.h"
 #include "../crossover/Crossover.h"
+#include "../mutation/Mutation.h"
 #include "../nodes/FunctionFactory.h"
 #include "../nodes/FunctionNode.h"
 #include "../nodes/TerminalFactory.h"
@@ -52,6 +53,9 @@ protected:
     Crossover *crossover;
     Crossover *gpuCrossover;
 
+    // Mutation method
+    Mutation *mutation = nullptr;
+
     // Elitism
     size_t elitism;
 
@@ -62,11 +66,21 @@ protected:
     // Auto incrementing ID counter
     static std::atomic<size_t> ID_COUNTER;
 
+    // Best solution
+    std::string bestSolution;
+
+    // Generation runned
+    size_t generationsRunned;
+
+    // Best fitness
+    float bestFitness;
+
+    // Time used
+    std::chrono::duration<double> timeUsed;
+
 private:
     // Helper Functions
     static int getRandomInt(int min, int max);
-    static TerminalNode* generateRandomTerminal(const std::vector<TerminalFactory> &terminalSet);
-    static FunctionNode* generateRandomFunction(const std::vector<FunctionFactory>& functionSet);
     static Node *buildRandomTree(const std::vector<FunctionFactory> &functionSet,
                                  const std::vector<TerminalFactory> &terminalSet,
                                  size_t currentDepth, size_t maxDepth,
@@ -82,6 +96,10 @@ public:
 
     // Destructor
     virtual ~Problem();
+
+    // Helper Functions
+    static TerminalNode* generateRandomTerminal(const std::vector<TerminalFactory> &terminalSet);
+    static FunctionNode* generateRandomFunction(const std::vector<FunctionFactory>& functionSet);
 
     // Getters
     size_t getId() const { return id; }
@@ -117,6 +135,10 @@ public:
     Problem& setGPUCrossover(Crossover* gpuCrossover) { this->gpuCrossover = gpuCrossover; return *this; }
     Crossover* getGPUCrossover() { return gpuCrossover; }
 
+    // Mutation method
+    Problem& setMutation(Mutation* mutation) { this->mutation = mutation; return *this; }
+    Mutation* getMutation() { return mutation; }
+
     // Elitism
     Problem& setElitism(size_t elitism) { this->elitism = elitism; return *this; }
     size_t getElitism() const { return elitism; }
@@ -127,6 +149,22 @@ public:
     Problem& setMaxNodes(size_t maxNodes) { this->maxNodes = maxNodes; return *this; }
     size_t getMaxNodes() const { return maxNodes; }
 
+    // Best solution
+    std::string getBestSolution() const { return bestSolution; }
+    void setBestSolution(std::string bestSolution) { this->bestSolution = bestSolution; }
+
+    // Generations runned
+    size_t getGenerationsRunned() const { return generationsRunned; }
+    void setGenerationsRunned(size_t generationsRunned) { this->generationsRunned = generationsRunned; }
+
+    // Time used
+    std::chrono::duration<double> getTimeUsed() const { return timeUsed; }
+    void setTimeUsed(std::chrono::duration<double> timeUsed) { this->timeUsed = timeUsed; }
+
+    // Best fitness
+    float getBestFitness() const { return bestFitness; }
+    void setBestFitness(float bestFitness) { this->bestFitness = bestFitness; }
+
     // Check if solution is in bounds (max depth and max nodes)
     bool isInBounds(Solution* solution);
 
@@ -134,7 +172,7 @@ public:
     Solution generateRandomSolution(size_t maxDepth, size_t maxNodes);
 
     // Evaluate the solution
-    virtual double evaluate(Solution* solution);
+    virtual float evaluate(Solution *solution);
 };
 
 

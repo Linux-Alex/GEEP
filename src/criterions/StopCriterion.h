@@ -60,7 +60,7 @@ public:
                 }
                 case MSE: {
                     if (mse <= threshold) {
-                        LogHelper::logMessage("Stop criterion met: MSE");
+                        LogHelper::logMessage("Stop criterion met: MSE = " + std::to_string(mse));
                         return true;
                     }
                     break;

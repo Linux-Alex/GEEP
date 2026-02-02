@@ -7,10 +7,16 @@
 #include <chrono>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
+#include <curand_mtgp32_kernel.h>
+
+#include <thrust/device_ptr.h>
+#include <thrust/extrema.h>
 
 #include "../../examples/LogHelper.h"
 #include "../cuda/GPUTree.h"
 #include "../problems/SymbolicRegressionProblem.cuh"
+#include "../elitism/Elitism.h"
+#include "../nodes/terminals/VariableNode.h"
 
 std::atomic<size_t> Task::ID_COUNTER = 0; // Initialize static member
 
@@ -37,7 +43,8 @@ void Task::run() {
 void Task::testGPUComputing() {
     // Run testGPUComputing on problem as SymbolicRegressionProblem
     try {
-        dynamic_cast<SymbolicRegressionProblem*>(problem)->testGPUComputing();
+        // dynamic_cast<SymbolicRegressionProblem*>(problem)->testGPUComputing();
+        dynamic_cast<SymbolicRegressionProblem*>(problem)->testGPUEvaluation();
     }
     catch (const std::bad_cast& e) {
         LogHelper::logMessage("Error: Problem is not a SymbolicRegressionProblem.", true);
@@ -73,20 +80,45 @@ void Task::runOnCPU() {
         solutions.push_back(solution);
     }
 
-    // Run the task
-    while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
-        // Evaluate solutions
-        for (auto& solution : solutions) {
-            double fitness = problem->evaluate(solution);
-            solution->setFitness(fitness);
-            evaluations++;
+    // Evaluate solutions
+    for (auto& solution : solutions) {
+        double fitness = problem->evaluate(solution);
+        solution->setFitness(fitness);
+        evaluations++;
+    }
 
-            // TODO: Prfect solution found (finish breaking)
-            if (fitness == 0) {
-                LogHelper::logMessage("Perfect solution found in generation " + std::to_string(generations) + " with " + std::to_string(evaluations) + " evaluations.");
-                break;
+
+    // Run the task
+    while (!problem->getStopCrit().isMet(evaluations, generations, findLowestMSEOnCPU(solutions))) {
+        // Evaluate solutions
+        // for (auto& solution : solutions) {
+        //     double fitness = problem->evaluate(solution);
+        //     solution->setFitness(fitness);
+        //     evaluations++;
+        //
+        //     // TODO: Prfect solution found (finish breaking)
+        //     if (fitness == 0) {
+        //         LogHelper::logMessage("Perfect solution found in generation " + std::to_string(generations) + " with " + std::to_string(evaluations) + " evaluations.");
+        //         break;
+        //     }
+        // }
+
+        if (generations == 0) {
+            // Print all trees
+            for (Solution* s : solutions) {
+                LogHelper::logMessage("Initial tree: " + s->getRoot()->toString() + ", Fitness: " + std::to_string(s->getFitness()));
             }
+            LogHelper::logMessage("-------------------");
         }
+
+
+        // Debug print first tree
+        LogHelper::logMessage("Tree index 0: " + solutions[0]->getRoot()->toString() + ", Fitness: " + std::to_string(solutions[0]->getFitness()));
+        // Debug print index 5
+        LogHelper::logMessage("Tree index 5: " + solutions[5]->getRoot()->toString() + ", Fitness: " + std::to_string(solutions[5]->getFitness()));
+        // Debug print last tree
+        LogHelper::logMessage("Tree index " + std::to_string(solutions.size() - 1) + ": " + solutions[solutions.size() - 1]->getRoot()->toString() + ", Fitness: " + std::to_string(solutions[solutions.size() - 1]->getFitness()));
+
 
         // Reproduction
         std::vector<Solution *> newSolutions;
@@ -116,19 +148,20 @@ void Task::runOnCPU() {
             std::vector<Solution*> children;
 
             // Check for reproduction
-            if (problem->getCrossover()->getReproductionRate() <= randomValue) {
+            if (problem->getCrossover()->getReproductionRate() >= randomValue) {
                 children = {
                     &(new Solution())->setRoot(parent1->getRoot()->clone()),
                     &(new Solution())->setRoot(parent2->getRoot()->clone())
                 };
+                LogHelper::logMessage("Reproduction occurred, reproduction rate: " + std::to_string(problem->getCrossover()->getReproductionRate()) + ", random value: " + std::to_string(randomValue));
             }
             else {
                 children = problem->getCrossover()->crossover(parent1, parent2);
             }
 
             for (Solution* child : children) {
-                // TODO: Mutate
-                // child->mutate();
+                if (problem->getMutation() != nullptr)
+                    problem->getMutation()->mutation(child, problem);
 
                 if (newSolutions.size() < problem->getPopulationSize()) {
                     // Check if the solutions is in bounds with max depth and max nodes
@@ -144,6 +177,13 @@ void Task::runOnCPU() {
             }
         }
 
+        // Print first tree of newSolution
+        LogHelper::logMessage("Tree index 0 of newSolutions: " + newSolutions[0]->getRoot()->toString());
+        // Print index 5 tree of newSolution
+        LogHelper::logMessage("Tree index 5 of newSolutions: " + newSolutions[5]->getRoot()->toString());
+        // Print last tree of newSolution
+        LogHelper::logMessage("Tree index " + std::to_string(newSolutions.size() - 1) + " of newSolutions: " + newSolutions[newSolutions.size() - 1]->getRoot()->toString());
+
         // Replace the old solutions with the new ones
         for (auto& solution : solutions) {
             // Check if solution is not in newSolutions
@@ -154,19 +194,26 @@ void Task::runOnCPU() {
         }
         solutions = newSolutions;
 
+        for (auto& solution : solutions) {
+            double fitness = problem->evaluate(solution);
+            solution->setFitness(fitness);
+            evaluations++;
+        }
+
         generations++;
     }
 
-    // Evaluate the last generation
-    for (auto& solution : solutions) {
-        double fitness = problem->evaluate(solution);
-        solution->setFitness(fitness);
-        evaluations++;
-    }
+    // // Evaluate the last generation
+    // for (auto& solution : solutions) {
+    //     double fitness = problem->evaluate(solution);
+    //     solution->setFitness(fitness);
+    //     evaluations++;
+    // }
 
     // Find the best solution
     Solution* bestSolution = findBestSolution(solutions);
     LogHelper::logMessage("Best solution: " + std::to_string(bestSolution->getFitness()));
+    LogHelper::logMessage("Found in generation: " + std::to_string(generations));
 
     // Print out solution
     LogHelper::logMessage(bestSolution->getRoot()->toString());
@@ -192,6 +239,9 @@ void Task::runOnGPU() {
     // Set CUDA device limit for printf
     cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1024 * 1024);
 
+    Elitism elitism;
+    elitism.setElitismCount(problem->getElitism());
+
     // Initialize GPU structures
     GPUTree gpu_trees;
     gpu_trees.allocate(problem->getMaxNodes(), problem->getPopulationSize());
@@ -205,15 +255,34 @@ void Task::runOnGPU() {
     }
 
     // Prepare target data
-    dynamic_cast<SymbolicRegressionProblem*>(problem)->prepareTargetData();
+    dynamic_cast<SymbolicRegressionProblem*>(problem)->prepareTargetData(gpu_trees);
 
     // Main evolution loop
     size_t evaluations = 0;
     size_t generations = 0;
 
-    while (!problem->getStopCrit().isMet(evaluations, generations, 0.0)) {
+    // GPU evaluation
+    dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
+    evaluations += problem->getPopulationSize();
+
+    // Calculate number of variables
+    size_t numberOfVariables = std::count_if(
+        problem->getTerminalSet().begin(),
+        problem->getTerminalSet().end(),
+        [](const std::function<TerminalNode*()>& fn) {
+            return dynamic_cast<VariableNode*>(fn()) != nullptr;
+        }
+    );
+
+
+    while (!problem->getStopCrit().isMet(evaluations, generations, findLowestMSEOnGPU(gpu_trees))) {
         // Write current generation info
         // LogHelper::logMessage("Generation " + std::to_string(generations) + ", Evaluations: " + std::to_string(evaluations));
+
+        // Debug print generation ever 100 generations
+        if (generations % 1000 == 0) {
+            LogHelper::logMessage("Generation " + std::to_string(generations) + ", Evaluations: " + std::to_string(evaluations) + ", Lowest MSE: " + std::to_string(findLowestMSEOnGPU(gpu_trees)));
+        }
 
         // CPU evaluation
         // solutions = gpu_trees.getCPUSolutions();
@@ -227,10 +296,6 @@ void Task::runOnGPU() {
         // for (int i = 0; i < problem->getPopulationSize(); i++) {
         //     gpu_trees.addSolution(i, solutions[i]);
         // }
-
-        // GPU evaluation
-        dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
-        evaluations += problem->getPopulationSize();
 
         // Print first 2 GPU trees for debugging
         // for (size_t i = 0; i < 8 && i < problem->getPopulationSize(); i++) {
@@ -311,6 +376,20 @@ void Task::runOnGPU() {
             LogHelper::logMessage("Problem during crossover: " + std::string(e.what()) + ". Retrying crossover...", true);
         }
 
+        try {
+            // Mutation on GPU
+            problem->getMutation()->mutationGPU(&new_gpu_trees, numberOfVariables);
+        } catch (const std::exception& e) {
+            LogHelper::logMessage("Problem during mutation: " + std::string(e.what()) + ". Retrying mutation...", true);
+        }
+
+        try {
+            // Elitism
+            elitism.applyElitismGPU(&gpu_trees, &new_gpu_trees)           ;
+        } catch (const std::exception& e) {
+            LogHelper::logMessage("Problem during elitism: " + std::string(e.what()) + ". Retrying elitism...", true);
+        }
+
         // while (newSolutions.size() < problem->getPopulationSize()) {
         //     // Selection on CPU
         //     Solution* parent1 = problem->getSelection()->select(solutions);
@@ -355,6 +434,10 @@ void Task::runOnGPU() {
 
         new_gpu_trees.free();
 
+        // GPU evaluation
+        dynamic_cast<SymbolicRegressionProblem*>(problem)->gpuEvaluate(gpu_trees);
+        evaluations += problem->getPopulationSize();
+
         generations++;
     }
 
@@ -364,8 +447,12 @@ void Task::runOnGPU() {
     solutions = gpu_trees.getCPUSolutions();
     for (size_t i = 0; i < solutions.size(); i++) {
         // solutions[i]->setFitness(gpu_trees.fitness_values[i]);
-        double fitness = problem->evaluate(solutions[i]);
-        gpu_trees.fitness_values[i] = static_cast<float>(fitness);
+        // double fitness = problem->evaluate(solutions[i]);
+        // //gpu_trees.fitness_values[i] = static_cast<float>(fitness);
+        //
+        // if (abs(fitness - gpu_trees.fitness_values[i]) > (fitness + gpu_trees.fitness_values[i]) / 2 * 0.01f) {
+        //     throw std::runtime_error("Mismatch between CPU and GPU fitness evaluation.\nCPU: " + std::to_string(fitness) + ", GPU: " + std::to_string(gpu_trees.fitness_values[i]) + "\nSolution: " + solutions[i]->getRoot()->toString());
+        // }
     }
 
     // Update CPU fitness values
@@ -381,7 +468,10 @@ void Task::runOnGPU() {
     // Find best solution
     Solution* bestSolution = findBestSolution(solutions);
     LogHelper::logMessage("Best solution: " + std::to_string(bestSolution->getFitness()));
+    LogHelper::logMessage("Found in generation: " + std::to_string(generations));
     LogHelper::logMessage(bestSolution->getRoot()->toString());
+    problem->setBestSolution(std::to_string(bestSolution->getFitness()));
+    problem->setBestFitness(static_cast<float>(bestSolution->getFitness()));
 
     gpu_trees.clearVariableMapping();
 
@@ -393,6 +483,8 @@ void Task::runOnGPU() {
 
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+    // Time used in milliseconds
+    problem->setTimeUsed(std::chrono::duration<double, std::milli>(duration));
 
     LogHelper::logMessage("Task " + std::to_string(id) + " finished in " + std::to_string(duration) + " ms.");
 }
@@ -411,3 +503,15 @@ Solution * Task::findBestSolution(const std::vector<Solution *> &solutions) {
 
     return bestSolution;
 }
+
+float Task::findLowestMSEOnCPU(const std::vector<Solution *> &solutions) {
+    float lowestMSE = std::numeric_limits<float>::max();
+    for (const auto& solution : solutions) {
+        if (solution->getFitness() < lowestMSE) {
+            lowestMSE = static_cast<float>(solution->getFitness());
+        }
+    }
+    // std::cout << "Lowest MSE on CPU: " << lowestMSE << std::endl;
+    return lowestMSE;
+}
+

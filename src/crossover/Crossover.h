@@ -10,7 +10,7 @@
 
 class Crossover {
 private:
-    float reproductionRate = 0.9f;
+    float reproductionRate = 0.0f;
 
 public:
     virtual ~Crossover() = default;

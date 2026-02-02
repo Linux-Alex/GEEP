@@ -4,6 +4,28 @@
 #include "SymbolicRegressionGPUTest.h"
 #include "../cuda/CudaUtils.h"
 #include "../problems/SymbolicRegressionProblem.cuh"
+#include "../nodes/functions/MultiplyOperator.h"
+#include "src/nodes/functions/AddOperator.h"
+#include "src/nodes/terminals/ConstNode.h"
+#include "src/nodes/terminals/VariableNode.h"
+
+TEST_F(SymbolicRegressionGPUTest, EvaluateSolution) {
+    Solution * s = new Solution();
+
+    AddOperator a, b;
+    MultiplyOperator m;
+
+    m.addChild(new VariableNode("x"));
+    m.addChild(new VariableNode("x"));
+
+    b.addChild(new VariableNode("x"));
+    b.addChild(new ConstNode(1.0f));
+
+    a.addChild(m.clone());
+    a.addChild(b.clone());
+
+    s->setRoot(m.clone());
+}
 
 TEST_F(SymbolicRegressionGPUTest, EvaluateLinearSolution) {
     // Represents the expression: x + 2

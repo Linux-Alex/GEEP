@@ -53,6 +53,9 @@ struct GPUTree {
 
     // Move operations
     void moveDataFrom(GPUTree&& other);
+
+    // Find the lowest MSE in the population
+    float findLowestMSE();
 };
 
 #endif //GPUTREE_H

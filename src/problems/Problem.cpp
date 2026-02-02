@@ -68,7 +68,7 @@ Solution Problem::generateRandomSolution(size_t maxDepth, size_t maxNodes) {
     return solution;
 }
 
-double Problem::evaluate(Solution *solution) {
+float Problem::evaluate(Solution *solution) {
     // Default implementation
     throw std::runtime_error("Problem::evaluate() not implemented.");
 }

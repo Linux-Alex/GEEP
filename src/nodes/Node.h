@@ -37,6 +37,9 @@ public:
     // Set parent
     void setParent(Node *parent);
 
+    // Get parent
+    Node* getParent() const;
+
     // Evaluate
     virtual double evaluate(const std::map<std::string, double>& variables) const = 0;
 

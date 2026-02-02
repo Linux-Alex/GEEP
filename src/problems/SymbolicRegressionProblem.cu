@@ -2,6 +2,7 @@
 
 #include <c++/13/cfloat>
 
+
 SymbolicRegressionProblem::~SymbolicRegressionProblem() {
     // Free GPU memory
     // if (flattened_targets.size() > 0) {
@@ -10,9 +11,9 @@ SymbolicRegressionProblem::~SymbolicRegressionProblem() {
     // }
 }
 
-__device__ float evaluateTreeWithX(const int* nodes, const float* values,
+__device__ float evaluateTreeWithTargets(const int* nodes, const float* values,
                                  const int* children, size_t node_count,
-                                 float x_value, size_t number_of_variables,
+                                 size_t number_of_variables,
                                  const float* target_data, const float* target_values) {
     // Temporary storage for computed values
     float temp_values[32];  // Adjust size based on max tree depth
@@ -34,8 +35,8 @@ __device__ float evaluateTreeWithX(const int* nodes, const float* values,
             }
         }
         else {
-            int left_val = temp_values[children[i*2]];
-            int right_val = temp_values[children[i*2+1]];
+            float left_val = temp_values[children[i*2]];
+            float right_val = temp_values[children[i*2+1]];
 
             switch (nodes[i]) {
                 case 2:  // Add
@@ -48,8 +49,7 @@ __device__ float evaluateTreeWithX(const int* nodes, const float* values,
                     temp_values[i] = left_val * right_val;
                     break;
                 case 5:  // Divide
-                    temp_values[i] = (right_val != 0.0f) ?
-                                     left_val / right_val : 0.0f;
+                    temp_values[i] = (right_val != 0.0f) ? left_val / right_val : 0.0f;
                     break;
                 default:
                     temp_values[i] = NAN;  // Invalid operator
@@ -191,16 +191,15 @@ __global__ void gpuEvaluateKernel(
     for (size_t i = 0; i < num_targets; i++) {
         float x = target_data[i];
         // printf("X: %.2f\n", x);
-        // float predicted = evaluateTreeWithX(
-        //     nodes + offset,
-        //     values + offset,
-        //     children + (offset * 2),
-        //     node_count,
-        //     x,
-        //     number_of_variables,
-        //     target_data + (number_of_variables * i),
-        //     target_values + i);
-        float predicted = 0.0f;
+        float predicted = evaluateTreeWithTargets(
+            nodes + offset,
+            values + offset,
+            children + (offset * 2),
+            node_count,
+            number_of_variables,
+            target_data + (number_of_variables * i),
+            target_values + i);
+        // float predicted = 0.0f;
         // Print debug info
         // printf("X: %.2f (after evaluateTreeWithX)\n", x);
         // printf("Target : x=%.2f => pred=%.2f (expected=%.2f)\n", x, predicted, target_values[i]);
@@ -513,13 +512,74 @@ void SymbolicRegressionProblem::prepareTargetData() {
     }
 
     // Debug: Print flattened targets
+    printf("Flattened targets (x values): ");
+    for (float x : flattened_targets) {
+        printf("%.2f ", x);
+    }
+    printf("\nTarget values (y expected): ");
+    for (float y : target_values) {
+        printf("%.2f ", y);
+    }
+    printf("\n");
+}
+
+void SymbolicRegressionProblem::prepareTargetData(GPUTree &tree) {
+    // Clear existing data
+    flattened_targets.clear();
+    target_values.clear();
+
+    // Find all unique variable names and get their IDs
+    std::set<std::string> unique_vars;
+    for (const auto& target : targets) {
+        for (const auto& [var_name, _] : target.getState()) {
+            unique_vars.insert(var_name);
+            // This will populate the variable_indices in tree
+            tree.getVariableId(var_name);
+        }
+    }
+    this->num_variables = unique_vars.size();
+
+    // Flatten targets into GPU-friendly format using the existing variable ID system
+    for (const auto& target : targets) {
+        // For each target, we need to ensure variables are in consistent order
+        // We'll use the variable IDs to determine the order
+
+        // Create a vector to hold variable values in ID order
+        std::vector<float> var_values(num_variables, 0.0f);
+
+        // Set values for variables present in this target
+        for (const auto& [var_name, value] : target.getState()) {
+            int var_id = tree.getVariableId(var_name);
+            if (var_id < num_variables) {
+                var_values[var_id] = static_cast<float>(value);
+            }
+        }
+
+        // Add the variable values to flattened_targets in ID order
+        for (float val : var_values) {
+            flattened_targets.push_back(val);
+        }
+
+        target_values.push_back(static_cast<float>(target.getTargetValue()));
+    }
+
+    // Debug: Print flattened targets
+    // printf("Number of variables: %zu\n", num_variables);
+    // printf("Number of data points: %zu\n", targets.size());
     // printf("Flattened targets (x values): ");
-    // for (float x : flattened_targets) {
-    //     printf("%.2f ", x);
+    // for (size_t i = 0; i < flattened_targets.size(); i++) {
+    //     if (i % num_variables == 0) printf("\nData point %zu: ", i / num_variables);
+    //     printf("%.2f ", flattened_targets[i]);
     // }
     // printf("\nTarget values (y expected): ");
     // for (float y : target_values) {
     //     printf("%.2f ", y);
     // }
-    printf("\n");
+    // printf("\n");
+    //
+    // // Debug: Print variable mapping
+    // printf("Variable mapping:\n");
+    // for (const auto& [var_name, var_id] : tree.variable_indices) {
+    //     printf("  %s -> %d\n", var_name.c_str(), var_id);
+    // }
 }

@@ -5,6 +5,8 @@
 #include "Target.h"
 #include <sstream>
 #include <fstream>
+#include <iomanip>
+#include <c++/12/iostream>
 
 Target::Target() { }
 
@@ -23,6 +25,9 @@ Target & Target::setTargetValue(double targetValue) {
 std::vector<Target> Target::readTargetsFromCSV(const std::string &filename, char delimiter, const std::string &targetColumn) {
     std::vector<Target> targets;
     std::vector<std::string> headers;
+
+    // FIX: Set locale to use period as decimal separator
+    std::setlocale(LC_NUMERIC, "C");
 
     std::ifstream file(filename);
 
@@ -86,7 +91,17 @@ std::vector<Target> Target::readTargetsFromCSV(const std::string &filename, char
 
         for (size_t i = 0; i < stringValues.size(); i++) {
             try {
-                float value = std::stof(stringValues[i]);
+                // FIX: Use stringstream with C locale for parsing
+                std::stringstream ss(stringValues[i]);
+                ss.imbue(std::locale("C"));  // Ensure period as decimal separator
+                float value;
+                ss >> value;
+
+                // Check if parsing was successful
+                if (ss.fail() || !ss.eof()) {
+                    throw std::runtime_error("Failed to parse float");
+                }
+
                 values.push_back(value);
 
                 // Store the target value
